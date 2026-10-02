@@ -167,7 +167,9 @@ Phase 3 ChatGPT 操作契約：`docs/CHATGPT_WORKFLOW.md`
 
 Phase 4 Web MVP 說明：`docs/WEB_MVP.md`
 
-Phase 5 Runtime 整合已完成；Vercel production activation 尚需建立 FragmentHub 專案並設定私人 Secret。\n\nPhase 5 部署說明：`docs/DEPLOYMENT.md`
+Phase 5 Runtime 整合已完成；Vercel production activation 尚需建立 FragmentHub 專案並設定私人 Secret。
+
+Phase 5 部署說明：`docs/DEPLOYMENT.md`
 
 
 ## 資料層指令
