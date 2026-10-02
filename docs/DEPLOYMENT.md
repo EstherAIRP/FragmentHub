@@ -40,7 +40,32 @@ Recommended settings:
 
 No GitHub Actions deployment workflow is required. Use Vercel Git Integration.
 
-## 3. Required environment variables
+## 3. GitHub OAuth App
+
+Before setting Vercel secrets, create a GitHub OAuth App for FragmentHub.
+
+GitHub → Settings → Developer settings → OAuth Apps → New OAuth App.
+
+Set:
+
+~~~text
+Application name:
+FragmentHub
+
+Homepage URL:
+<FRAGMENTHUB_PUBLIC_URL>
+
+Authorization callback URL:
+<FRAGMENTHUB_PUBLIC_URL>/api/auth/callback
+~~~
+
+FragmentHub v0.1 uses the production callback only. Arbitrary Vercel Preview URLs are not OAuth callback targets.
+
+After creating the OAuth App, copy its Client ID and generate a Client Secret. Store both only in Vercel Environment Variables.
+
+The OAuth request intentionally does not request repository scopes. It uses the resulting token only once to call GitHub /user and resolve immutable numeric user identity.
+
+## 4. Required environment variables
 
 Production requires:
 
@@ -92,6 +117,15 @@ Example:
 
 GitHub username is not used as the durable authorization key.
 
+How to find the numeric GitHub ID:
+
+```text
+GET https://api.github.com/users/<github-login>
+→ read the numeric "id" field
+```
+
+For a single-user FragmentHub, configure exactly one numeric user ID.
+
 ### FRAGMENTHUB_SESSION_SECRET
 
 Random session-signing secret. A suitable value can be generated locally with:
@@ -116,7 +150,7 @@ Contents: Read and write
 
 The token is server-side only and must not use a `NEXT_PUBLIC_` prefix.
 
-## 4. Save flow
+## 5. Save flow
 
 ### Create
 
@@ -147,7 +181,7 @@ Web edit
 
 If GitHub changed after the edit page was loaded, API returns HTTP 409 and does not overwrite the newer version.
 
-## 5. Immutable fields
+## 6. Immutable fields
 
 Web update cannot modify these fields even if a caller bypasses the UI:
 
@@ -160,7 +194,7 @@ Web update cannot modify these fields even if a caller bypasses the UI:
 
 These fields are restored from the current canonical GitHub Fragment on the server.
 
-## 6. Data-only commits do not rebuild Vercel
+## 7. Data-only commits do not rebuild Vercel
 
 A Web save creates a Git commit because GitHub is the Source of Truth.
 
@@ -178,7 +212,7 @@ Behavior:
 
 This is safe because production pages read live Fragment data from GitHub instead of relying on build-time embedded data.
 
-## 7. Authentication
+## 8. Authentication
 
 Private routes are protected by the server layout.
 
@@ -202,7 +236,7 @@ FRAGMENTHUB_GITHUB_TOKEN remains a separate server credential for canonical Frag
 
 Logout clears the session cookie.
 
-## 8. Deployment verification checklist
+## 9. Deployment verification checklist
 
 After the first production deployment:
 
@@ -221,7 +255,7 @@ After the first production deployment:
 13. A data-only commit is ignored by Vercel deployment.
 14. No `OPENAI_API_KEY` or model runtime exists in the Web project.
 
-## 9. Build verification
+## 10. Build verification
 
 Before production activation run:
 
@@ -234,7 +268,7 @@ npm run build
 
 `npm run build` runs data validation and index generation through `prebuild`.
 
-## 10. External activation boundary
+## 11. External activation boundary
 
 Repository implementation does not contain user secrets.
 
