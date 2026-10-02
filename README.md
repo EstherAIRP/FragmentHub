@@ -75,11 +75,13 @@ data/fragments/
 ## 開發狀態
 
 - Phase 1：資料規格 ✅
-- Phase 2：Repository 與資料層 ⏳
-- Phase 3：GPT 分析層
+- Phase 2：Repository 與資料層 ✅
+- Phase 3：GPT 分析層 ⏳
 - Phase 4：Web MVP
 - Phase 5：GitHub / Vercel 整合
 
 Phase 1 正式規格：`docs/DATA_SPEC.md`
 
-目前下一步為 Phase 2：Repository 與資料層。
+Phase 2 資料層說明：`docs/DATA_LAYER.md`
+
+目前下一步為 Phase 3：GPT 分析層。
