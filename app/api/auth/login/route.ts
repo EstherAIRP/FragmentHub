@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
   createOAuthFlow,
   getGitHubOAuthConfig,
 } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const config = getGitHubOAuthConfig();
     const flow = createOAuthFlow(config);
@@ -21,8 +21,8 @@ export async function GET() {
   } catch (error) {
     console.error("GitHub OAuth login initialization failed:", error);
     return NextResponse.redirect(
-      new URL("/login?error=unconfigured", "http://localhost"),
-      302,
+      new URL("/login?error=unconfigured", request.url),
+      303,
     );
   }
 }
