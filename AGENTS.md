@@ -30,7 +30,7 @@ When implementing AI-assisted Fragment workflows:
 
 - The repository is private, but a deployed web app must not be assumed private.
 - Never place Fragment data, GitHub tokens, model API keys, or other secrets under `public/`.
-- Keep GitHub and model access server-side.
+- Keep GitHub access server-side. FragmentHub Web must not call model APIs.
 - Do not enable production access to private Fragment content without authentication.
 
 ## Scope
@@ -45,4 +45,4 @@ GitHub Actions are intentionally excluded from v0.1 unless a concrete batch-main
 - Interview may run only after classification confirmation and is limited to six answered questions in v0.1.
 - Finalization may rewrite only `title`, `summary`, `next_action`, and `notes`.
 - Finalization must preserve confirmed classification metadata and `original_input` exactly through programmatic assembly.
-- Phase 3 API routes must never write canonical Fragment data directly. Saving remains a separate, final-confirmation action.
+- ChatGPT is the only AI analysis surface. Do not add model API routes, model SDKs, or AI classification to FragmentHub Web.\n- Web manual create/edit may validate and preview drafts, but Phase 4 must not persist them; Phase 5 owns GitHub save integration.
