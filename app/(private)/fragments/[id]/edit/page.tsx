@@ -68,7 +68,7 @@ export default async function EditFragmentPage({
           <p className="eyebrow">{fragment.id}</p>
           <h1>編輯 Fragment</h1>
           <p className="subtle">
-            Phase 4 可修改並檢查草稿，但尚不會寫回 GitHub。
+            修改後先預覽 JSON；再次確認後才會寫回 GitHub。
           </p>
         </div>
       </section>
