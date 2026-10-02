@@ -1,12 +1,16 @@
 import "server-only";
 
-import {
-  createHash,
-  createHmac,
-  randomBytes,
-  timingSafeEqual,
-} from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+
+import {
+  constantTimeEqual,
+  createPkceChallenge,
+  parseAllowedGitHubIds,
+  signPayload,
+  verifyPayload,
+  type ExpiringPayload,
+} from "@/lib/auth-core";
 
 const SESSION_SECONDS = 60 * 60 * 24 * 7;
 const FLOW_SECONDS = 60 * 10;
@@ -23,16 +27,12 @@ function flowCookieName() {
     : "fragmenthub_oauth";
 }
 
-type SignedPayload = {
-  exp: number;
-};
-
-type OAuthFlow = SignedPayload & {
+type OAuthFlow = ExpiringPayload & {
   state: string;
   verifier: string;
 };
 
-export type AuthSession = SignedPayload & {
+export type AuthSession = ExpiringPayload & {
   id: string;
   login: string;
   avatarUrl: string;
@@ -45,58 +45,6 @@ export type GitHubOAuthConfig = {
   sessionSecret: string;
   allowedGitHubIds: Set<string>;
 };
-
-function safeEqual(left: string, right: string): boolean {
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-function signPayload(payload: object, secret: string): string {
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString(
-    "base64url",
-  );
-  const signature = createHmac("sha256", secret)
-    .update(body)
-    .digest("base64url");
-
-  return `${body}.${signature}`;
-}
-
-function verifyPayload<T extends SignedPayload>(
-  token: string | undefined,
-  secret: string,
-): T | null {
-  if (!token) return null;
-
-  try {
-    const [body, signature, extra] = token.split(".");
-    if (!body || !signature || extra) return null;
-
-    const expected = createHmac("sha256", secret)
-      .update(body)
-      .digest("base64url");
-
-    if (!safeEqual(signature, expected)) return null;
-
-    const payload = JSON.parse(
-      Buffer.from(body, "base64url").toString("utf8"),
-    ) as T;
-
-    if (
-      !payload ||
-      typeof payload !== "object" ||
-      !Number.isFinite(payload.exp) ||
-      payload.exp <= Date.now()
-    ) {
-      return null;
-    }
-
-    return payload;
-  } catch {
-    return null;
-  }
-}
 
 function parsePublicUrl(value: string): string {
   const url = new URL(value);
@@ -133,11 +81,8 @@ export function getGitHubOAuthConfig(): GitHubOAuthConfig {
   const publicUrlRaw = process.env.FRAGMENTHUB_PUBLIC_URL?.trim() ?? "";
   const sessionSecret =
     process.env.FRAGMENTHUB_SESSION_SECRET?.trim() ?? "";
-  const allowedGitHubIds = new Set(
-    (process.env.FRAGMENTHUB_ALLOWED_GITHUB_IDS ?? "")
-      .split(",")
-      .map((value) => value.trim())
-      .filter((value) => /^\d+$/.test(value)),
+  const allowedGitHubIds = parseAllowedGitHubIds(
+    process.env.FRAGMENTHUB_ALLOWED_GITHUB_IDS ?? "",
   );
 
   if (!clientId) {
@@ -192,9 +137,7 @@ export function createOAuthFlow(
 } {
   const state = randomBytes(32).toString("base64url");
   const verifier = randomBytes(48).toString("base64url");
-  const challenge = createHash("sha256")
-    .update(verifier)
-    .digest("base64url");
+  const challenge = createPkceChallenge(verifier);
 
   const flow: OAuthFlow = {
     state,
@@ -228,7 +171,7 @@ export function verifyOAuthFlow(
     typeof flow.state !== "string" ||
     typeof flow.verifier !== "string" ||
     !state ||
-    !safeEqual(flow.state, state)
+    !constantTimeEqual(flow.state, state)
   ) {
     return null;
   }
