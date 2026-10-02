@@ -156,13 +156,11 @@ export const fragmentAnalysisJsonSchema = {
     domains: {
       type: "array",
       maxItems: 5,
-      uniqueItems: true,
       items: domainEnum,
     },
     tags: {
       type: "array",
       maxItems: 12,
-      uniqueItems: true,
       items: {
         type: "string",
         pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$",
@@ -173,7 +171,6 @@ export const fragmentAnalysisJsonSchema = {
     },
     related: {
       type: "array",
-      uniqueItems: true,
       items: fragmentIdJsonSchema,
     },
     title: {
