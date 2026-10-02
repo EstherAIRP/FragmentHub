@@ -59,7 +59,7 @@ FragmentHub
 同一個 Repository 保存：
 
 - Next.js / Vercel 應用程式
-- GPT 分析規則與 Prompt
+- ChatGPT 操作規格與分類規則文件
 - Fragment Schema
 - Fragment JSON 資料
 - 搜尋索引產生邏輯
@@ -677,60 +677,53 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 ## 14. 系統架構
 
 ```text
-                    ┌────────────────┐
-                    │    ChatGPT     │
-                    │ 分析／討論入口 │
-                    └───────┬────────┘
-                            │
-                            │ 使用者確認後寫入
-                            ▼
-                    ┌────────────────┐
-                    │     GitHub     │
-                    │ Private Repo   │
-                    │  FragmentHub   │
-                    └───────┬────────┘
-                            │
-                       Git Integration
-                            │
-                            ▼
-┌────────────────┐   ┌────────────────┐
-│   Browser UI   │──▶│   Vercel App   │
-│ Quick Capture  │   │ Next.js Server │
-│ Search / Edit  │◀──│ Auth / GPT/API │
-└────────────────┘   └───────┬────────┘
-                             │
-                     GitHub API / GPT API
+                    ChatGPT
+                       │
+        分析 / 分類 / 討論 / 提問 / 確認
+                       │
+                       ▼
+                    GitHub
+             Fragment JSON Source of Truth
+                       ▲
+                       │
+                  GitHub API
+                       │
+                       ▼
+               FragmentHub Web
+        瀏覽 / 搜尋 / 篩選 / 編輯 / 管理
 ```
 
 ### 元件責任
 
 #### ChatGPT
 
+- 唯一 AI 分析入口
 - 接收碎片
 - 分析與預分類
 - 與使用者討論修改
-- 動態提問
+- 可選提問紀錄
 - 依 ID 延續討論
 - 經確認後建立或更新 Fragment
 
-#### Web App
+#### FragmentHub Web
 
-- Quick Capture
-- 預分類結果顯示
-- 人工修改與確認
-- 提問模式
-- Fragment List
-- Fragment Detail
+- Private Login
+- Dashboard
+- Fragment List / Detail
 - Search / Filter
-- Edit
+- 手動新增／編輯草稿
+- Archive
+- Relation 顯示
+- JSON Preview
+
+Web 不呼叫 OpenAI API，也不執行 GPT 分析。
 
 #### Next.js Server
 
 - 驗證登入狀態
-- 呼叫 GPT API
-- 執行 JSON Schema 驗證
-- 讀取搜尋索引
-- 讀寫 GitHub Repository
+- 讀取 Fragment JSON
+- 執行 Schema 驗證
+- Phase 5 再接 GitHub 寫入
 - 控制 Secret
 
 #### GitHub
@@ -743,88 +736,58 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 #### Vercel
 
 - 部署 Next.js
-- 執行 Server-side API
-- Git commit 後重新部署
+- 執行 Server-side Web
+- 管理部署環境 Secret
 
 ---
 
 ## 15. 網站功能規劃
 
-### 15.1 首頁
+### 15.1 Dashboard
 
 顯示：
 
-- Quick Capture
-- 最近新增 Fragment
-- Inbox
+- Total
+- Actionable
 - Active
 - Waiting
-- Learning
-- 可切換 `scope`
+- Work
+- Personal
+- 最近更新 Fragment
 
-### 15.2 Quick Capture
+### 15.2 Fragment List
 
-```text
-輸入內容
-↓
-Analyze
-↓
-GPT 預分類
-↓
-顯示 Metadata 與摘要
-↓
-使用者修改／討論
-↓
-Confirm
-↓
-詢問是否提問
-↓
-可選 Interview
-↓
-Final Preview
-↓
-Confirm Save
-↓
-寫入 GitHub
-```
+顯示 ID、Title、Scope、Type、Status、Priority、Domains、Tags、Updated At。
 
-### 15.3 Fragment List
+支援 Search 與 Filter。
 
-顯示基本欄位：
+### 15.3 Fragment Detail
 
-- ID
-- Title
-- Scope
-- Type
-- Status
-- Priority
-- Domains
-- Tags
-- Updated At
+支援查看：
 
-支援排序與篩選。
+- 完整內容
+- Original input
+- Notes
+- Interview
+- Metadata
+- Parent Project
+- Related
+- Backlinks
+- Project children
 
-### 15.4 Fragment Detail
+### 15.4 Manual Create / Edit
 
-支援：
+Web 不做 AI 分析。
 
-- 查看完整資料
-- 查看原始輸入
-- 查看摘要與 Notes
-- 查看 Interview
-- 查看 Related Fragment
-- 查看 Project 關聯
-- 修改 Metadata
-- 修改內容
-- Archive
-- 進入 GPT 討論
+使用者直接填寫分類與內容，系統只做 Schema 檢查與 JSON Preview。
+
+Phase 4 不寫回 GitHub；Phase 5 才接正式 Save。
 
 ### 15.5 Search / Filter
 
 至少支援：
 
-- ID
-- Title / Summary 關鍵字
+- ID / Title / Summary 關鍵字
 - Scope
 - Type
 - Status
@@ -832,7 +795,6 @@ Confirm Save
 - Urgency
 - Domain
 - Tag
-- Project
 
 第一版不導入向量搜尋。
 
@@ -1015,17 +977,26 @@ scripts/
 
 正式 GPT 分析層說明見 `docs/AI_LAYER.md`。
 
-### Phase 4：Web MVP
+### Phase 4：Web MVP ✅ 已完成
 
-內容：
+已完成：
 
-- Authentication
-- Quick Capture
+- 單一私人使用者 Authentication
+- Dashboard
 - Fragment List
 - Fragment Detail
-- Search
-- Filter
-- Edit
+- Search / Filter
+- 手動新增草稿
+- 手動編輯草稿
+- Archive 草稿操作
+- Project / Related / Backlink 顯示
+- JSON Draft Preview
+- Responsive UI
+- Web Runtime 移除 AI API
+
+Phase 4 不持久化草稿；正式 GitHub Save 屬於 Phase 5。
+
+正式 Web MVP 說明見 `docs/WEB_MVP.md`.
 
 ### Phase 5：GitHub / Vercel 整合
 
