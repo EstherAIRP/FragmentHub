@@ -219,6 +219,27 @@ export async function replaceGitHubFragment(
     { previous: currentStored.fragment },
   );
 
+  if (
+    currentStored.fragment.type === "project" &&
+    candidate.type !== "project"
+  ) {
+    const projectChildren = all.filter(
+      (fragment) =>
+        fragment.id !== id && fragment.project === id,
+    );
+
+    if (projectChildren.length > 0) {
+      throw new FragmentDataValidationError(
+        projectChildren.map((fragment) => ({
+          code: "project_has_children",
+          path: fragment.id,
+          message:
+            `Fragment ${fragment.id} still uses ${id} as its project.`,
+        })),
+      );
+    }
+  }
+
   try {
     const response = await githubRequest<PutContentResponse>(
       config,
