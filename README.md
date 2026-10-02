@@ -165,7 +165,9 @@ Phase 2 資料層說明：`docs/DATA_LAYER.md`
 
 Phase 3 ChatGPT 操作契約：`docs/CHATGPT_WORKFLOW.md`
 
-Phase 4 Web MVP 說明：`docs/WEB_MVP.md`\n\n目前下一步為 Phase 5：GitHub / Vercel 整合。
+Phase 4 Web MVP 說明：`docs/WEB_MVP.md`
+
+目前下一步為 Phase 5：GitHub / Vercel 整合。
 
 
 ## 資料層指令
