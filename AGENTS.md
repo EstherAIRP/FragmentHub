@@ -21,6 +21,10 @@ When implementing AI-assisted Fragment workflows:
 - Use `scope` metadata for work/personal classification.
 - Fragment IDs use `F-000001` format and never encode classification.
 - Keep JSON compatible with `config/fragment.schema.json` and `lib/fragment-schema.ts`.
+- Do not bypass `lib/fragments/semantic-validator.ts` when creating or updating canonical Fragment data.
+- Use the controlled domain IDs from `config/domains.json`; AI must not invent and persist new domain IDs.
+- Preserve optimistic concurrency controls when updating stored Fragments.
+- Prefer archive over delete. Any true delete must be explicitly requested and must not leave inbound project/related references.
 
 ## Security rules
 
