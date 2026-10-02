@@ -132,6 +132,24 @@ export async function replaceLocalFragment(
     { previous: current },
   );
 
+  if (current.type === "project" && next.type !== "project") {
+    const projectChildren = all.filter(
+      (fragment) =>
+        fragment.id !== id && fragment.project === id,
+    );
+
+    if (projectChildren.length > 0) {
+      throw new FragmentDataValidationError(
+        projectChildren.map((fragment) => ({
+          code: "project_has_children",
+          path: fragment.id,
+          message:
+            `Fragment ${fragment.id} still uses ${id} as its project.`,
+        })),
+      );
+    }
+  }
+
   await fs.writeFile(filePathFor(id), serializeFragment(next), "utf8");
   return next;
 }
