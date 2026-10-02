@@ -1,8 +1,5 @@
 import "server-only";
 
 export function isGitHubRemoteConfigured(): boolean {
-  return Boolean(
-    process.env.FRAGMENTHUB_GITHUB_TOKEN &&
-      process.env.FRAGMENTHUB_GITHUB_REPOSITORY,
-  );
+  return Boolean(process.env.FRAGMENTHUB_GITHUB_TOKEN);
 }
