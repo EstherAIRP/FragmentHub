@@ -993,18 +993,27 @@ scripts/
 
 正式資料層說明見 `docs/DATA_LAYER.md`。
 
-### Phase 3：GPT 分析層
+### Phase 3：GPT 分析層 ✅ 已完成
 
-內容：
+已完成：
 
 - Classification Prompt
 - Structured Output Schema
+- Controlled Domain 輸出
 - Metadata 建議
+- Project / Related 建議與有效性檢查
 - 分析結果回報
-- 人工修改流程
-- Confirm 狀態
-- Interview Prompt
-- Final Record 產生
+- Human Confirm 狀態
+- 重新編輯後取消 Confirm
+- Dynamic Interview Prompt
+- Interview 上限與停止條件
+- Final Record 文字整理
+- Confirmed Metadata 鎖定
+- Final Record Draft 產生
+- Refusal / Incomplete Response 處理
+- AI Layer 純邏輯測試
+
+正式 GPT 分析層說明見 `docs/AI_LAYER.md`。
 
 ### Phase 4：Web MVP
 
