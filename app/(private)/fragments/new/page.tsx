@@ -18,6 +18,14 @@ const initial: ManualFragmentDraft = {
   next_action: null,
   original_input: "",
   notes: null,
+  interview: [],
+  source: {
+    channel: "web",
+  },
+  ai: {
+    classification_confirmed: true,
+    interview_used: false,
+  },
 };
 
 export default async function NewFragmentPage() {
