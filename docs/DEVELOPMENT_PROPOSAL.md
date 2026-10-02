@@ -721,7 +721,7 @@ Web 不呼叫 OpenAI API，也不執行 GPT 分析。
 - 驗證登入狀態
 - 讀取 Fragment JSON
 - 執行 Schema 驗證
-- Phase 5 再接 GitHub 寫入
+- 透過 Phase 5 GitHub Runtime API 寫入
 - 控制 Secret
 
 #### GitHub
@@ -779,7 +779,7 @@ Web 不做 AI 分析。
 
 使用者直接填寫分類與內容，系統只做 Schema 檢查與 JSON Preview。
 
-Phase 4 不寫回 GitHub；Phase 5 才接正式 Save。
+Phase 5 已接上正式 GitHub Save；Web 仍保留 Preview → Final Confirm 邊界。
 
 ### 15.5 Search / Filter
 
@@ -992,21 +992,36 @@ scripts/
 - Responsive UI
 - Web Runtime 移除 AI API
 
-Phase 4 不持久化草稿；正式 GitHub Save 屬於 Phase 5。
+Phase 5 已完成 GitHub Runtime Save、即時讀取與衝突處理。
 
 正式 Web MVP 說明見 `docs/WEB_MVP.md`.
 
 ### Phase 5：GitHub / Vercel 整合
 
-內容：
+Runtime Integration 已完成：
 
-- Server-side GitHub 寫入
-- 寫入後狀態同步
-- Vercel Git deployment
-- Build-time index rebuild
-- Secret 管理
-- 錯誤處理
-- 寫入衝突處理
+- Server-side GitHub Create / Update
+- 寫入後即時 GitHub 讀取
+- ID 配發與 Content SHA 寫入
+- expected_updated_at / SHA 樂觀鎖定
+- 409 衝突處理
+- Server-side immutable field protection
+- Authentication-protected save API
+- Logout
+- Vercel data-only commit ignoreCommand
+- Production Secret 規格
+- 部署文件
+
+Production Activation 尚待外部設定：
+
+- 在 Vercel 建立 FragmentHub Project
+- 連接 EstherAIRP/FragmentHub
+- 設定 FRAGMENTHUB_PASSWORD
+- 設定 FRAGMENTHUB_SESSION_SECRET
+- 設定 FRAGMENTHUB_GITHUB_TOKEN
+- 執行首次 production build 與 runtime 驗收
+
+部署說明見 `docs/DEPLOYMENT.md`。
 
 ---
 
