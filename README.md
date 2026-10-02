@@ -191,9 +191,25 @@ npm run typecheck
 ## Production secrets
 
 ```text
-FRAGMENTHUB_PASSWORD
+FRAGMENTHUB_GITHUB_CLIENT_ID
+FRAGMENTHUB_GITHUB_CLIENT_SECRET
+FRAGMENTHUB_PUBLIC_URL
 FRAGMENTHUB_SESSION_SECRET
+FRAGMENTHUB_ALLOWED_GITHUB_IDS
 FRAGMENTHUB_GITHUB_TOKEN
 ```
 
+Authentication 採 GitHub OAuth + PKCE + numeric GitHub ID allowlist。
+
+登入身分與資料寫入憑證分離：
+
+```text
+GitHub OAuth
+→ 確認使用者身分
+
+FRAGMENTHUB_GITHUB_TOKEN
+→ Server-side 讀寫 Fragment JSON
+```
+
+Authentication 規格見 `docs/AUTHENTICATION.md`。
 完整部署與權限說明見 `docs/DEPLOYMENT.md`。
