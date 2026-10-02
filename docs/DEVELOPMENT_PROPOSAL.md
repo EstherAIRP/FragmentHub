@@ -660,7 +660,7 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 - 編輯
 - 寫入 GitHub
 
-具體登入機制於實作階段決定，但必須支援單一私人使用者情境。
+正式登入採 GitHub OAuth + PKCE；登入後以 numeric GitHub user ID allowlist 判斷存取權。OAuth user token 不作為 canonical data write token。
 
 ### 13.3 Secret 僅存在 Server Side
 
@@ -705,7 +705,7 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 
 #### FragmentHub Web
 
-- Private Login
+- GitHub OAuth Login
 - Dashboard
 - Fragment List / Detail
 - Search / Filter
@@ -1016,10 +1016,16 @@ Production Activation 尚待外部設定：
 
 - 在 Vercel 建立 FragmentHub Project
 - 連接 EstherAIRP/FragmentHub
-- 設定 FRAGMENTHUB_PASSWORD
+- 建立 GitHub OAuth App
+- 設定 FRAGMENTHUB_GITHUB_CLIENT_ID
+- 設定 FRAGMENTHUB_GITHUB_CLIENT_SECRET
+- 設定 FRAGMENTHUB_PUBLIC_URL
 - 設定 FRAGMENTHUB_SESSION_SECRET
+- 設定 FRAGMENTHUB_ALLOWED_GITHUB_IDS
 - 設定 FRAGMENTHUB_GITHUB_TOKEN
 - 執行首次 production build 與 runtime 驗收
+
+Authentication 規格見 `docs/AUTHENTICATION.md`。
 
 部署說明見 `docs/DEPLOYMENT.md`。
 
