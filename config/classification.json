@@ -1,0 +1,63 @@
+{
+  "version": "0.1",
+  "scope": {
+    "mode": "single",
+    "values": {
+      "work": "工作相關內容",
+      "personal": "個人生活、學習、創作與私人專案"
+    }
+  },
+  "type": {
+    "mode": "single",
+    "values": {
+      "idea": "尚未形成明確執行項目的靈感或構想",
+      "task": "具有明確可執行動作的待辦",
+      "learning": "想學習、研究或理解的主題",
+      "requirement": "需要釐清、設計或實作的需求",
+      "project": "由多個項目組成的持續性專案",
+      "question": "尚待回答或釐清的問題",
+      "decision": "需要保留脈絡與結論的決策",
+      "tracking": "需要後續追蹤狀態的事項",
+      "resource": "值得保存以供後續使用的資源",
+      "note": "不適合其他類型的一般紀錄"
+    }
+  },
+  "status": {
+    "mode": "single",
+    "values": {
+      "inbox": "已收錄但尚未整理",
+      "seed": "初步想法",
+      "exploring": "正在探索與釐清",
+      "defined": "內容已較明確",
+      "actionable": "已能轉為具體行動",
+      "active": "正在執行",
+      "waiting": "等待外部條件、回覆或時間",
+      "done": "已完成",
+      "archived": "已封存"
+    }
+  },
+  "priority": {
+    "mode": "single",
+    "values": ["high", "medium", "low", "none"],
+    "description": "代表重要程度，不等同時間急迫性"
+  },
+  "urgency": {
+    "mode": "single",
+    "values": ["high", "medium", "low", "none"],
+    "description": "代表時間急迫性，不等同重要程度"
+  },
+  "domains": {
+    "mode": "multiple",
+    "strategy": "GPT 依內容提出建議，使用者確認後寫入"
+  },
+  "tags": {
+    "mode": "multiple",
+    "strategy": "允許 GPT 依內容自由產生細粒度標籤"
+  },
+  "decision_policy": {
+    "ai_role": "propose",
+    "human_role": "confirm",
+    "write_requires_confirmation": true,
+    "automatic_reclassification": false
+  }
+}
