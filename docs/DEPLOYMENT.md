@@ -45,8 +45,11 @@ No GitHub Actions deployment workflow is required. Use Vercel Git Integration.
 Production requires:
 
 ```text
-FRAGMENTHUB_PASSWORD
+FRAGMENTHUB_GITHUB_CLIENT_ID
+FRAGMENTHUB_GITHUB_CLIENT_SECRET
+FRAGMENTHUB_PUBLIC_URL
 FRAGMENTHUB_SESSION_SECRET
+FRAGMENTHUB_ALLOWED_GITHUB_IDS
 FRAGMENTHUB_GITHUB_TOKEN
 ```
 
@@ -57,11 +60,37 @@ FRAGMENTHUB_GITHUB_REPOSITORY=EstherAIRP/FragmentHub
 FRAGMENTHUB_GITHUB_BRANCH=main
 ```
 
-### FRAGMENTHUB_PASSWORD
+### FRAGMENTHUB_GITHUB_CLIENT_ID / FRAGMENTHUB_GITHUB_CLIENT_SECRET
 
-Private Web login password.
+GitHub OAuth App credentials used only for user authentication.
 
-Store only in Vercel Environment Variables. Do not commit it.
+OAuth App callback URL must be:
+
+```text
+<FRAGMENTHUB_PUBLIC_URL>/api/auth/callback
+```
+
+### FRAGMENTHUB_PUBLIC_URL
+
+Production origin only, for example:
+
+```text
+https://fragmenthub.example.com
+```
+
+v0.1 does not implement arbitrary Vercel Preview OAuth handoff.
+
+### FRAGMENTHUB_ALLOWED_GITHUB_IDS
+
+Comma-separated immutable numeric GitHub user IDs.
+
+Example:
+
+```text
+12345678,87654321
+```
+
+GitHub username is not used as the durable authorization key.
 
 ### FRAGMENTHUB_SESSION_SECRET
 
@@ -153,9 +182,23 @@ This is safe because production pages read live Fragment data from GitHub instea
 
 Private routes are protected by the server layout.
 
-Login uses an HttpOnly, SameSite=Strict cookie.
+Authentication flow:
 
-Save APIs independently verify authentication before performing GitHub writes.
+```text
+GitHub OAuth
+→ PKCE + state verification
+→ GET /user
+→ numeric GitHub ID allowlist
+→ signed FragmentHub session
+```
+
+Production session uses an HttpOnly, Secure, SameSite=Lax cookie.
+
+The OAuth user access token is used only to resolve GitHub identity and is not persisted.
+
+Save APIs independently verify the FragmentHub session before performing GitHub writes.
+
+FRAGMENTHUB_GITHUB_TOKEN remains a separate server credential for canonical Fragment data access.
 
 Logout clears the session cookie.
 
@@ -164,17 +207,19 @@ Logout clears the session cookie.
 After the first production deployment:
 
 1. Opening `/` while logged out redirects to `/login`.
-2. Invalid password stays logged out.
-3. Valid password opens Dashboard.
-4. Manual create shows a JSON preview before save.
-5. Save creates `data/fragments/F-xxxxxx.json` in GitHub.
-6. Detail page immediately shows the new Fragment.
-7. Edit updates the same JSON file.
-8. Editing an old version produces HTTP 409 instead of overwriting newer data.
-9. Archive updates `status` to `archived`.
-10. Logout returns to `/login`.
-11. A data-only commit is ignored by Vercel deployment.
-12. No `OPENAI_API_KEY` or model runtime exists in the Web project.
+2. GitHub OAuth starts from `/api/auth/login`.
+3. Invalid / cancelled OAuth does not create a FragmentHub session.
+4. GitHub identity not present in the numeric ID allowlist is rejected.
+5. Allowed GitHub identity opens Dashboard.
+6. Manual create shows a JSON preview before save.
+7. Save creates `data/fragments/F-xxxxxx.json` in GitHub.
+8. Detail page immediately shows the new Fragment.
+9. Edit updates the same JSON file.
+10. Editing an old version produces HTTP 409 instead of overwriting newer data.
+11. Archive updates `status` to `archived`.
+12. Logout returns to `/login`.
+13. A data-only commit is ignored by Vercel deployment.
+14. No `OPENAI_API_KEY` or model runtime exists in the Web project.
 
 ## 9. Build verification
 
@@ -193,4 +238,4 @@ npm run build
 
 Repository implementation does not contain user secrets.
 
-A production deployment cannot be activated until the Vercel project exists and the three required secret values are supplied by the account owner.
+A production deployment cannot be activated until the Vercel project exists, the GitHub OAuth App is registered, and the required OAuth/session/storage secret values are supplied by the account owner.
