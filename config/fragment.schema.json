@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fragmenthub.local/schema/fragment.schema.json",
+  "title": "FragmentHub Fragment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "scope",
+    "type",
+    "status",
+    "priority",
+    "urgency",
+    "domains",
+    "tags",
+    "title",
+    "summary",
+    "original_input",
+    "related",
+    "project",
+    "interview",
+    "source",
+    "ai",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "0.1" },
+    "id": {
+      "type": "string",
+      "pattern": "^F-[0-9]{6}$"
+    },
+    "scope": {
+      "enum": ["work", "personal"]
+    },
+    "type": {
+      "enum": [
+        "idea",
+        "task",
+        "learning",
+        "requirement",
+        "project",
+        "question",
+        "decision",
+        "tracking",
+        "resource",
+        "note"
+      ]
+    },
+    "status": {
+      "enum": [
+        "inbox",
+        "seed",
+        "exploring",
+        "defined",
+        "actionable",
+        "active",
+        "waiting",
+        "done",
+        "archived"
+      ]
+    },
+    "priority": {
+      "enum": ["high", "medium", "low", "none"]
+    },
+    "urgency": {
+      "enum": ["high", "medium", "low", "none"]
+    },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string"
+    },
+    "original_input": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_action": {
+      "type": ["string", "null"]
+    },
+    "notes": {
+      "type": ["string", "null"]
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^F-[0-9]{6}$"
+      },
+      "uniqueItems": true
+    },
+    "project": {
+      "type": ["string", "null"],
+      "pattern": "^F-[0-9]{6}$"
+    },
+    "interview": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question", "answer"],
+        "properties": {
+          "question": { "type": "string", "minLength": 1 },
+          "answer": { "type": "string" }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel"],
+      "properties": {
+        "channel": {
+          "enum": ["chatgpt", "web"]
+        }
+      }
+    },
+    "ai": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classification_confirmed", "interview_used"],
+      "properties": {
+        "classification_confirmed": { "type": "boolean" },
+        "interview_used": { "type": "boolean" }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}
