@@ -32,6 +32,10 @@ When implementing AI-assisted Fragment workflows:
 - Never place Fragment data, GitHub tokens, model API keys, or other secrets under `public/`.
 - Keep GitHub access server-side. FragmentHub Web must not call model APIs.
 - Do not enable production access to private Fragment content without authentication.
+- Web authentication uses GitHub OAuth + PKCE + signed session cookies.
+- Authorization must use immutable numeric GitHub user IDs from FRAGMENTHUB_ALLOWED_GITHUB_IDS, not mutable usernames.
+- Keep OAuth identity credentials separate from FRAGMENTHUB_GITHUB_TOKEN used for canonical data writes.
+- Never persist or reuse the OAuth user access token as the Fragment data write credential.
 
 ## Scope
 
