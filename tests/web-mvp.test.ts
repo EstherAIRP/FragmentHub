@@ -7,6 +7,7 @@ import {
   toFragmentWriteInput,
 } from "../lib/fragments/manual-draft";
 import { filterFragments } from "../lib/fragments/query";
+import { prepareCreateInput, prepareReplacement } from "../lib/fragments/write";
 
 function fragment(overrides: Partial<Fragment> = {}): Fragment {
   return fragmentSchema.parse({
@@ -122,4 +123,80 @@ test("manual Web draft becomes canonical write input without AI runtime", () => 
   assert.equal(writeInput.ai.classification_confirmed, true);
   assert.equal(writeInput.ai.interview_used, false);
   assert.deepEqual(writeInput.interview, []);
+});
+
+
+test("Web create ignores forged system metadata", () => {
+  const draft = manualFragmentDraftSchema.parse({
+    scope: "personal",
+    type: "note",
+    status: "defined",
+    priority: "none",
+    urgency: "none",
+    domains: ["knowledge-management"],
+    tags: ["manual"],
+    project: null,
+    related: [],
+    title: "Manual create",
+    summary: "",
+    next_action: null,
+    original_input: "Original",
+    notes: null,
+    interview: [{ question: "Forged?", answer: "Yes" }],
+    source: { channel: "chatgpt" },
+    ai: {
+      classification_confirmed: true,
+      interview_used: true,
+    },
+  });
+
+  const input = prepareCreateInput(draft);
+
+  assert.equal(input.source.channel, "web");
+  assert.deepEqual(input.interview, []);
+  assert.equal(input.ai.interview_used, false);
+});
+
+test("Web edit preserves immutable source, interview and original input", () => {
+  const current = fragment({
+    source: { channel: "chatgpt" },
+    original_input: "Keep this original text.",
+    interview: [{ question: "Q?", answer: "A" }],
+    ai: {
+      classification_confirmed: true,
+      interview_used: true,
+    },
+  });
+
+  const draft = manualFragmentDraftSchema.parse({
+    scope: "work",
+    type: "task",
+    status: "active",
+    priority: "high",
+    urgency: "medium",
+    domains: ["automation-rpa"],
+    tags: ["changed"],
+    project: null,
+    related: [],
+    title: "Changed title",
+    summary: "Changed summary",
+    next_action: "Do it.",
+    original_input: "Attempted overwrite.",
+    notes: "Updated notes.",
+    interview: [],
+    source: { channel: "web" },
+    ai: {
+      classification_confirmed: true,
+      interview_used: false,
+    },
+  });
+
+  const replacement = prepareReplacement(current, draft);
+
+  assert.equal(replacement.original_input, "Keep this original text.");
+  assert.equal(replacement.source.channel, "chatgpt");
+  assert.deepEqual(replacement.interview, [{ question: "Q?", answer: "A" }]);
+  assert.equal(replacement.ai.interview_used, true);
+  assert.equal(replacement.title, "Changed title");
+  assert.equal(replacement.status, "active");
 });
