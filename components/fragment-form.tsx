@@ -50,7 +50,13 @@ function csv(value: FormDataEntryValue | null) {
     new Set(
       text
         .split(",")
-        .map((item) => item.trim().toLowerCase())
+        .map((item) =>
+          item
+            .trim()
+            .toLowerCase()
+            .replace(/[_\\s]+/g, "-")
+            .replace(/-+/g, "-"),
+        )
         .filter(Boolean),
     ),
   );
@@ -86,6 +92,12 @@ export function FragmentForm({
       next_action: nullable(form.get("next_action")),
       original_input: String(form.get("original_input") ?? ""),
       notes: nullable(form.get("notes")),
+      interview: initial.interview,
+      source: initial.source,
+      ai: {
+        classification_confirmed: true,
+        interview_used: initial.interview.length > 0,
+      },
     };
 
     const parsed = manualFragmentDraftSchema.safeParse(candidate);
