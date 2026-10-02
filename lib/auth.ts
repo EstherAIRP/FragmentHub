@@ -46,6 +46,89 @@ export type GitHubOAuthConfig = {
   allowedGitHubIds: Set<string>;
 };
 
+export type AuthConfigIssue = {
+  variable: string;
+  message: string;
+};
+
+export function getAuthConfigIssues(): AuthConfigIssue[] {
+  const issues: AuthConfigIssue[] = [];
+
+  const clientId = process.env.FRAGMENTHUB_GITHUB_CLIENT_ID?.trim() ?? "";
+  const clientSecret =
+    process.env.FRAGMENTHUB_GITHUB_CLIENT_SECRET?.trim() ?? "";
+  const publicUrl = process.env.FRAGMENTHUB_PUBLIC_URL?.trim() ?? "";
+  const sessionSecret =
+    process.env.FRAGMENTHUB_SESSION_SECRET?.trim() ?? "";
+  const allowedIds =
+    process.env.FRAGMENTHUB_ALLOWED_GITHUB_IDS?.trim() ?? "";
+
+  if (!clientId) {
+    issues.push({
+      variable: "FRAGMENTHUB_GITHUB_CLIENT_ID",
+      message: "未設定 GitHub OAuth Client ID。",
+    });
+  }
+
+  if (!clientSecret) {
+    issues.push({
+      variable: "FRAGMENTHUB_GITHUB_CLIENT_SECRET",
+      message: "未設定 GitHub OAuth Client Secret。",
+    });
+  }
+
+  if (!publicUrl) {
+    issues.push({
+      variable: "FRAGMENTHUB_PUBLIC_URL",
+      message: "未設定正式網站 URL。",
+    });
+  } else {
+    try {
+      parsePublicUrl(publicUrl);
+    } catch (error) {
+      issues.push({
+        variable: "FRAGMENTHUB_PUBLIC_URL",
+        message:
+          error instanceof Error ? error.message : "Public URL 格式不正確。",
+      });
+    }
+  }
+
+  if (sessionSecret.length < 32) {
+    issues.push({
+      variable: "FRAGMENTHUB_SESSION_SECRET",
+      message: "至少需要 32 個字元。",
+    });
+  }
+
+  if (!allowedIds) {
+    issues.push({
+      variable: "FRAGMENTHUB_ALLOWED_GITHUB_IDS",
+      message: "未設定允許登入的 numeric GitHub user ID。",
+    });
+  } else {
+    try {
+      const parsed = parseAllowedGitHubIds(allowedIds);
+      if (parsed.size === 0) {
+        issues.push({
+          variable: "FRAGMENTHUB_ALLOWED_GITHUB_IDS",
+          message: "至少需要一個 numeric GitHub user ID。",
+        });
+      }
+    } catch (error) {
+      issues.push({
+        variable: "FRAGMENTHUB_ALLOWED_GITHUB_IDS",
+        message:
+          error instanceof Error
+            ? error.message
+            : "GitHub user ID 格式不正確。",
+      });
+    }
+  }
+
+  return issues;
+}
+
 function parsePublicUrl(value: string): string {
   const url = new URL(value);
 
@@ -117,12 +200,7 @@ export function getGitHubOAuthConfig(): GitHubOAuthConfig {
 }
 
 export function isAuthConfigured(): boolean {
-  try {
-    getGitHubOAuthConfig();
-    return true;
-  } catch {
-    return false;
-  }
+  return getAuthConfigIssues().length === 0;
 }
 
 export function callbackUrl(config = getGitHubOAuthConfig()): string {
