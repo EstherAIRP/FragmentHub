@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
@@ -36,7 +37,16 @@ type FragmentFormProps = {
   initial: ManualFragmentDraft;
   domains: Option[];
   fragments: FragmentOption[];
+  remoteConfigured: boolean;
   existingMeta?: ExistingMeta;
+};
+
+type SaveResponse = {
+  fragment?: {
+    id: string;
+    updated_at: string;
+  };
+  error?: string;
 };
 
 function nullable(value: FormDataEntryValue | null) {
@@ -54,7 +64,7 @@ function csv(value: FormDataEntryValue | null) {
           item
             .trim()
             .toLowerCase()
-            .replace(/[_\\s]+/g, "-")
+            .replace(/[_\s]+/g, "-")
             .replace(/-+/g, "-"),
         )
         .filter(Boolean),
@@ -67,10 +77,15 @@ export function FragmentForm({
   initial,
   domains,
   fragments,
+  remoteConfigured,
   existingMeta,
 }: FragmentFormProps) {
-  const [preview, setPreview] = useState<string | null>(null);
+  const router = useRouter();
+  const [previewDraft, setPreviewDraft] =
+    useState<ManualFragmentDraft | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(initial.status);
 
   function buildPreview(event: React.FormEvent<HTMLFormElement>) {
@@ -103,7 +118,8 @@ export function FragmentForm({
     const parsed = manualFragmentDraftSchema.safeParse(candidate);
 
     if (!parsed.success) {
-      setPreview(null);
+      setPreviewDraft(null);
+      setSaveError(null);
       setErrors(
         parsed.error.issues.map((issue) => {
           const path = issue.path.join(".") || "fragment";
@@ -114,25 +130,75 @@ export function FragmentForm({
     }
 
     setErrors([]);
-
-    const writeInput = toFragmentWriteInput(parsed.data);
-    const display =
-      mode === "edit" && existingMeta
-        ? {
-            id: existingMeta.id,
-            created_at: existingMeta.created_at,
-            updated_at: "(Phase 5 寫入時更新)",
-            ...writeInput,
-          }
-        : {
-            id: "(Phase 5 配發)",
-            created_at: "(Phase 5 產生)",
-            updated_at: "(Phase 5 產生)",
-            ...writeInput,
-          };
-
-    setPreview(JSON.stringify(display, null, 2));
+    setSaveError(null);
+    setPreviewDraft(parsed.data);
   }
+
+  async function saveDraft() {
+    if (!previewDraft || !remoteConfigured || saving) return;
+
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const endpoint =
+        mode === "edit" && existingMeta
+          ? `/api/fragments/${existingMeta.id}`
+          : "/api/fragments";
+
+      const response = await fetch(endpoint, {
+        method: mode === "edit" ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          mode === "edit" && existingMeta
+            ? {
+                draft: previewDraft,
+                expected_updated_at: existingMeta.updated_at,
+              }
+            : {
+                draft: previewDraft,
+              },
+        ),
+      });
+
+      const payload = (await response.json()) as SaveResponse;
+
+      if (!response.ok || !payload.fragment) {
+        throw new Error(payload.error ?? "GitHub 儲存失敗。");
+      }
+
+      router.push(`/fragments/${payload.fragment.id}`);
+      router.refresh();
+    } catch (error) {
+      setSaveError(
+        error instanceof Error ? error.message : "GitHub 儲存失敗。",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const preview = previewDraft
+    ? JSON.stringify(
+        mode === "edit" && existingMeta
+          ? {
+              id: existingMeta.id,
+              created_at: existingMeta.created_at,
+              updated_at: "(儲存時更新)",
+              ...toFragmentWriteInput(previewDraft),
+            }
+          : {
+              id: "(儲存時配發)",
+              created_at: "(儲存時產生)",
+              updated_at: "(儲存時產生)",
+              ...toFragmentWriteInput(previewDraft),
+            },
+        null,
+        2,
+      )
+    : null;
 
   return (
     <div className="editorLayout">
@@ -174,9 +240,12 @@ export function FragmentForm({
               <select
                 name="status"
                 value={status}
-                onChange={(event) =>
-                  setStatus(event.target.value as ManualFragmentDraft["status"])
-                }
+                onChange={(event) => {
+                  setStatus(
+                    event.target.value as ManualFragmentDraft["status"],
+                  );
+                  setPreviewDraft(null);
+                }}
               >
                 {Object.entries(statusLabels).map(([value, label]) => (
                   <option value={value} key={value}>
@@ -250,7 +319,9 @@ export function FragmentForm({
               required
             />
             {mode === "edit" ? (
-              <small>依資料規格，既有 Fragment 的 original_input 不直接改寫。</small>
+              <small>
+                依資料規格，既有 Fragment 的 original_input 不直接改寫。
+              </small>
             ) : null}
           </label>
 
@@ -364,7 +435,10 @@ export function FragmentForm({
             <button
               className="dangerButton"
               type="button"
-              onClick={() => setStatus("archived")}
+              onClick={() => {
+                setStatus("archived");
+                setPreviewDraft(null);
+              }}
             >
               設為 Archived
             </button>
@@ -379,27 +453,47 @@ export function FragmentForm({
       <aside className="draftPreview">
         <div className="sectionHeading">
           <div>
-            <p className="eyebrow">Draft preview</p>
-            <h2>待儲存草稿</h2>
+            <p className="eyebrow">Final preview</p>
+            <h2>待儲存 JSON</h2>
           </div>
         </div>
 
         {preview ? (
           <>
             <pre>{preview}</pre>
-            <div className="notice">
-              <strong>Phase 4 不會寫入 GitHub</strong>
-              <p>
-                這份 JSON 已準備好交給 Phase 5 的 GitHub Store。正式儲存仍需要再按一次確認。
-              </p>
-            </div>
-            <button className="disabledButton" type="button" disabled>
-              Phase 5：確認並寫入 GitHub
+
+            {!remoteConfigured ? (
+              <div className="notice danger">
+                <strong>GitHub Remote Store 尚未設定</strong>
+                <p>
+                  需要在 Vercel 設定 FRAGMENTHUB_GITHUB_TOKEN 後才能正式儲存。
+                </p>
+              </div>
+            ) : null}
+
+            {saveError ? (
+              <div className="notice danger">
+                <strong>儲存失敗</strong>
+                <p>{saveError}</p>
+              </div>
+            ) : null}
+
+            <button
+              className="primaryButton saveButton"
+              type="button"
+              disabled={!remoteConfigured || saving}
+              onClick={saveDraft}
+            >
+              {saving
+                ? "正在寫入 GitHub…"
+                : mode === "edit"
+                  ? "確認並更新 GitHub"
+                  : "確認並建立 Fragment"}
             </button>
           </>
         ) : (
           <div className="previewEmpty">
-            填寫表單後按「檢查並預覽 JSON」，這裡會顯示待寫入資料。
+            填寫表單後按「檢查並預覽 JSON」，確認內容後才會出現 GitHub 儲存按鈕。
           </div>
         )}
       </aside>
