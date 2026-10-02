@@ -50,7 +50,7 @@ export default async function NewFragmentPage() {
           <p className="eyebrow">Manual capture</p>
           <h1>手動新增 Fragment</h1>
           <p className="subtle">
-            不呼叫 AI。Phase 4 只建立並檢查草稿，Phase 5 才會正式寫入 GitHub。
+            不呼叫 AI。確認 JSON 後會透過 GitHub Remote Store 正式建立 Fragment。
           </p>
         </div>
       </section>
