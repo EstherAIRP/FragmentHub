@@ -9,7 +9,7 @@ FragmentHub 是一個以 GPT 輔助整理生活、工作、學習與靈感碎片
 - JSON 作為 Source of Truth
 - 不以資料夾切割工作／私人內容
 - 透過 metadata（如 `scope`、`type`、`domains`、`tags`）分類
-- GPT 負責預判與結構化；使用者負責最終確認
+- ChatGPT 負責預判與結構化；使用者負責最終確認
 - 未經確認不寫入正式 Fragment
 - GitHub Actions 不屬於 v0.1 必要元件
 
@@ -155,17 +155,17 @@ AI 判斷
 
 - Phase 1：資料規格 ✅
 - Phase 2：Repository 與資料層 ✅
-- Phase 3：GPT 分析層 ✅
-- Phase 4：Web MVP ⏳
-- Phase 5：GitHub / Vercel 整合
+- Phase 3：ChatGPT 操作契約 ✅
+- Phase 4：Web MVP ✅
+- Phase 5：GitHub / Vercel 整合 ⏳
 
 Phase 1 正式規格：`docs/DATA_SPEC.md`
 
 Phase 2 資料層說明：`docs/DATA_LAYER.md`
 
-Phase 3 GPT 分析層說明：`docs/AI_LAYER.md`
+Phase 3 ChatGPT 操作契約：`docs/CHATGPT_WORKFLOW.md`
 
-目前下一步為 Phase 4：Web MVP。
+Phase 4 Web MVP 說明：`docs/WEB_MVP.md`\n\n目前下一步為 Phase 5：GitHub / Vercel 整合。
 
 
 ## 資料層指令
