@@ -8,7 +8,7 @@
 
 FragmentHub Web 負責：
 
-- 私人登入門
+- GitHub OAuth 登入門
 - Dashboard
 - Fragment List
 - Search
@@ -42,12 +42,19 @@ Web 不負責：
 
 ### /login
 
-單一私人使用者登入頁。
+GitHub OAuth 登入頁。
+
+流程：
+
+GitHub OAuth → numeric GitHub ID allowlist → FragmentHub signed session。
 
 需要環境變數：
 
-- FRAGMENTHUB_PASSWORD
+- FRAGMENTHUB_GITHUB_CLIENT_ID
+- FRAGMENTHUB_GITHUB_CLIENT_SECRET
+- FRAGMENTHUB_PUBLIC_URL
 - FRAGMENTHUB_SESSION_SECRET
+- FRAGMENTHUB_ALLOWED_GITHUB_IDS
 
 Session 使用 HttpOnly Cookie。
 
@@ -117,13 +124,15 @@ Phase 4 只驗證並預覽 JSON，不正式寫入 GitHub。
 
 ## 3. Authentication
 
-Phase 4 提供單一使用者密碼門。
+正式 Authentication 採 GitHub OAuth。
 
-所有 (private) Route Group 會先檢查 Session Cookie，未登入則導向 /login。
+所有 (private) Route Group 會先檢查 signed Session Cookie，未登入則導向 /login。
 
-Repository 為 Private 不代表 Vercel 網站本身是 Private，因此登入門仍是必要的。
+GitHub OAuth 使用 PKCE + state，Callback 後以 numeric GitHub user ID 對照 allowlist。
 
-Phase 5 會再處理正式部署環境中的 Secret、登出與 Session 行為驗證。
+Repository 為 Private 不代表 Vercel 網站本身是 Private，因此 Web 身分驗證仍是必要的。
+
+詳細規格見 docs/AUTHENTICATION.md。
 
 ## 4. Manual Draft
 
