@@ -85,3 +85,17 @@ Phase 1 正式規格：`docs/DATA_SPEC.md`
 Phase 2 資料層說明：`docs/DATA_LAYER.md`
 
 目前下一步為 Phase 3：GPT 分析層。
+
+
+## 資料層指令
+
+```bash
+npm run validate:data
+npm run build:index
+npm run test:data
+npm run typecheck
+```
+
+`npm run build` 會透過 `prebuild` 先驗證所有 Fragment 並重新產生 `generated/index.json`。
+
+資料層實作與 GitHub Remote Store 說明見 `docs/DATA_LAYER.md`。
