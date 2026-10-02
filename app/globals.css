@@ -1,0 +1,232 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #172033;
+  background: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 32rem),
+    #f5f7fb;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 64px 0 80px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  gap: 32px;
+  align-items: end;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 760px;
+  margin-bottom: 16px;
+  font-size: clamp(36px, 6vw, 68px);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.heroCopy {
+  max-width: 680px;
+  margin-bottom: 0;
+  color: #667085;
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.captureBox,
+.panel,
+.stats article {
+  border: 1px solid #e3e7ef;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 60px rgba(31, 41, 55, 0.05);
+  backdrop-filter: blur(18px);
+}
+
+.captureBox {
+  border-radius: 24px;
+  padding: 24px;
+}
+
+.captureBox > span {
+  font-weight: 800;
+}
+
+.captureBox p {
+  margin: 10px 0 20px;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.captureBox button {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: #98a2b3;
+  background: #eef1f6;
+  font-weight: 700;
+  cursor: not-allowed;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stats article {
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.stats span {
+  display: block;
+  color: #667085;
+  font-size: 14px;
+}
+
+.stats strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 32px;
+}
+
+.panel {
+  border-radius: 28px;
+  padding: 28px;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #eef0f4;
+}
+
+.panelHeader h2 {
+  margin-bottom: 0;
+  font-size: 28px;
+}
+
+.muted {
+  color: #98a2b3;
+  font-size: 13px;
+}
+
+.emptyState {
+  padding: 64px 20px;
+  text-align: center;
+  color: #667085;
+}
+
+.emptyState strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #344054;
+  font-size: 18px;
+}
+
+.emptyState p {
+  max-width: 620px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+
+.fragmentList {
+  display: grid;
+  gap: 14px;
+  padding-top: 20px;
+}
+
+.fragmentCard {
+  border: 1px solid #e9ecf2;
+  border-radius: 18px;
+  padding: 20px;
+  background: #fff;
+}
+
+.fragmentCard h3 {
+  margin: 12px 0 8px;
+}
+
+.fragmentCard > p {
+  margin-bottom: 14px;
+  color: #667085;
+  line-height: 1.65;
+}
+
+.fragmentMeta,
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fragmentMeta span,
+.tags span {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    width: min(100% - 24px, 1120px);
+    padding-top: 32px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panelHeader {
+    align-items: start;
+    flex-direction: column;
+  }
+}
