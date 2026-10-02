@@ -81,6 +81,12 @@ test("manual draft rejects unregistered domains", () => {
     next_action: null,
     original_input: "Test",
     notes: null,
+    interview: [],
+    source: { channel: "web" },
+    ai: {
+      classification_confirmed: true,
+      interview_used: false,
+    },
   });
 
   assert.equal(result.success, false);
@@ -102,6 +108,12 @@ test("manual Web draft becomes canonical write input without AI runtime", () => 
     next_action: "Run test.",
     original_input: "Need to check OCR.",
     notes: null,
+    interview: [],
+    source: { channel: "web" },
+    ai: {
+      classification_confirmed: true,
+      interview_used: false,
+    },
   });
 
   const writeInput = toFragmentWriteInput(draft);
