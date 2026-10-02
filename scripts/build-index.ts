@@ -23,4 +23,7 @@ async function main() {
   );
 }
 
-await main();
+main().catch((error) => {
+  console.error("FragmentHub index build failed:", error);
+  process.exitCode = 1;
+});
