@@ -974,16 +974,24 @@ scripts/
 
 正式資料規格見 `docs/DATA_SPEC.md`。
 
-### Phase 2：Repository 與資料層
+### Phase 2：Repository 與資料層 ✅ 已完成
 
-內容：
+已完成：
 
-- 建立專案目錄
+- 建立資料層模組結構
 - Fragment JSON CRUD
 - JSON Schema 驗證
-- ID 產生器
+- Zod Runtime 驗證
+- 跨 Fragment 語意驗證
+- ID 產生器與平行寫入重試
 - Build-time Index Generator
-- GitHub API 讀寫
+- Related backlink 計算
+- GitHub Contents API 讀寫
+- SHA / updated_at 樂觀鎖定
+- CLI 全資料驗證
+- Data Layer 純邏輯測試
+
+正式資料層說明見 `docs/DATA_LAYER.md`。
 
 ### Phase 3：GPT 分析層
 
