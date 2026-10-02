@@ -973,7 +973,7 @@ scripts/
 - Refusal / Incomplete Response 處理
 - AI Layer 純邏輯測試
 
-正式 GPT 分析層說明見 `docs/AI_LAYER.md`。
+正式操作契約見 `docs/CHATGPT_WORKFLOW.md`。
 
 ### Phase 4：Web MVP ✅ 已完成
 
