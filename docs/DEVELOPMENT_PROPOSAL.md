@@ -667,7 +667,6 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 以下資訊不得出現在瀏覽器端程式碼：
 
 - GitHub Token / GitHub App Secret
-- OpenAI API Key
 - Session Secret
 - 其他服務金鑰
 
