@@ -157,7 +157,7 @@ AI 判斷
 - Phase 2：Repository 與資料層 ✅
 - Phase 3：ChatGPT 操作契約 ✅
 - Phase 4：Web MVP ✅
-- Phase 5：GitHub / Vercel 整合 ⏳
+- Phase 5：GitHub Runtime Integration ✅／Vercel Production Activation ⏳
 
 Phase 1 正式規格：`docs/DATA_SPEC.md`
 
@@ -167,7 +167,7 @@ Phase 3 ChatGPT 操作契約：`docs/CHATGPT_WORKFLOW.md`
 
 Phase 4 Web MVP 說明：`docs/WEB_MVP.md`
 
-目前下一步為 Phase 5：GitHub / Vercel 整合。
+Phase 5 Runtime 整合已完成；Vercel production activation 尚需建立 FragmentHub 專案並設定私人 Secret。\n\nPhase 5 部署說明：`docs/DEPLOYMENT.md`
 
 
 ## 資料層指令
@@ -176,7 +176,7 @@ Phase 4 Web MVP 說明：`docs/WEB_MVP.md`
 npm run validate:data
 npm run build:index
 npm run test:data
-npm run test:ai
+npm run test:web
 npm run test
 npm run typecheck
 ```
@@ -184,3 +184,14 @@ npm run typecheck
 `npm run build` 會透過 `prebuild` 先驗證所有 Fragment 並重新產生 `generated/index.json`。
 
 資料層實作與 GitHub Remote Store 說明見 `docs/DATA_LAYER.md`。
+
+
+## Production secrets
+
+```text
+FRAGMENTHUB_PASSWORD
+FRAGMENTHUB_SESSION_SECRET
+FRAGMENTHUB_GITHUB_TOKEN
+```
+
+完整部署與權限說明見 `docs/DEPLOYMENT.md`。
