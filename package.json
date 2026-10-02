@@ -13,7 +13,9 @@
     "prebuild": "npm run build:index",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:ai": "tsx --test tests/ai-layer.test.ts",
+    "test": "npm run test:data && npm run test:ai"
   },
   "dependencies": {
     "next": "16.3.8",
