@@ -884,7 +884,7 @@ scripts/
 - GitHub JSON 建立
 - GitHub JSON 更新
 - Web Login / Access Control
-- Quick Capture
+- Web Manual Capture
 - Fragment List
 - Fragment Detail
 - 基本搜尋
