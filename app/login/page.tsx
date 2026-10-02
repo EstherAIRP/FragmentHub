@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { isAuthConfigured, isAuthenticated } from "@/lib/auth";
+import {
+  getAuthConfigIssues,
+  isAuthConfigured,
+  isAuthenticated,
+} from "@/lib/auth";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -23,6 +27,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const params = await searchParams;
   const configured = isAuthConfigured();
+  const configIssues = getAuthConfigIssues();
   const message = params.error ? errorMessages[params.error] : null;
 
   return (
@@ -48,10 +53,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {!configured ? (
           <div className="notice danger">
             <strong>GitHub OAuth 尚未設定完成</strong>
-            <p>
-              請設定 GitHub OAuth Client ID、Client Secret、Public URL、
-              Session Secret 與 allowed GitHub user IDs。
-            </p>
+            <p>以下設定需要修正：</p>
+            <ul>
+              {configIssues.map((issue) => (
+                <li key={issue.variable}>
+                  <code>{issue.variable}</code>：{issue.message}
+                </li>
+              ))}
+            </ul>
           </div>
         ) : (
           <>
