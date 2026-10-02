@@ -1,12 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://fragmenthub.local/schema/fragment.schema.json",
-  "title": "FragmentHub Fragment",
+  "title": "FragmentHub Canonical Fragment",
+  "description": "Canonical Fragment format for FragmentHub schema version 0.1.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "id",
+    "created_at",
+    "updated_at",
     "scope",
     "type",
     "status",
@@ -14,22 +17,32 @@
     "urgency",
     "domains",
     "tags",
+    "project",
+    "related",
     "title",
     "summary",
+    "next_action",
     "original_input",
-    "related",
-    "project",
+    "notes",
     "interview",
     "source",
-    "ai",
-    "created_at",
-    "updated_at"
+    "ai"
   ],
   "properties": {
-    "schema_version": { "const": "0.1" },
+    "schema_version": {
+      "const": "0.1"
+    },
     "id": {
       "type": "string",
       "pattern": "^F-[0-9]{6}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "scope": {
       "enum": ["work", "personal"]
@@ -69,42 +82,74 @@
     },
     "domains": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
-      "uniqueItems": true
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
     },
     "tags": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 },
-      "uniqueItems": true
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "project": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^F-[0-9]{6}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "related": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^F-[0-9]{6}$"
+      }
     },
     "title": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "maxLength": 120
     },
     "summary": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 2000
+    },
+    "next_action": {
+      "anyOf": [
+        {
+          "type": "string",
+          "maxLength": 2000
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "original_input": {
       "type": "string",
       "minLength": 1
     },
-    "next_action": {
-      "type": ["string", "null"]
-    },
     "notes": {
-      "type": ["string", "null"]
-    },
-    "related": {
-      "type": "array",
-      "items": {
-        "type": "string",
-        "pattern": "^F-[0-9]{6}$"
-      },
-      "uniqueItems": true
-    },
-    "project": {
-      "type": ["string", "null"],
-      "pattern": "^F-[0-9]{6}$"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "interview": {
       "type": "array",
@@ -113,8 +158,14 @@
         "additionalProperties": false,
         "required": ["question", "answer"],
         "properties": {
-          "question": { "type": "string", "minLength": 1 },
-          "answer": { "type": "string" }
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "answer": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -133,17 +184,13 @@
       "additionalProperties": false,
       "required": ["classification_confirmed", "interview_used"],
       "properties": {
-        "classification_confirmed": { "type": "boolean" },
-        "interview_used": { "type": "boolean" }
+        "classification_confirmed": {
+          "const": true
+        },
+        "interview_used": {
+          "type": "boolean"
+        }
       }
-    },
-    "created_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "updated_at": {
-      "type": "string",
-      "format": "date-time"
     }
   }
 }
