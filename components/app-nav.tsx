@@ -17,6 +17,12 @@ export function AppNav() {
           <Link href="/fragments">Fragments</Link>
           <Link href="/fragments/new">新增</Link>
         </nav>
+
+        <form action="/api/auth/logout" method="post">
+          <button className="textButton" type="submit">
+            登出
+          </button>
+        </form>
       </div>
     </header>
   );
