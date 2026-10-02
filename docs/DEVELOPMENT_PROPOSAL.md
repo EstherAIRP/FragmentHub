@@ -953,7 +953,7 @@ scripts/
 
 正式資料層說明見 `docs/DATA_LAYER.md`。
 
-### Phase 3：GPT 分析層 ✅ 已完成
+### Phase 3：ChatGPT 操作契約 ✅ 已完成
 
 已完成：
 
