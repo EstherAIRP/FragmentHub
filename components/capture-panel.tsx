@@ -322,7 +322,7 @@ export function CapturePanel() {
                 </button>
               </div>
               <small>
-                這兩個動作會在 Phase 3 / 4 接上；目前不會寫入 GitHub。
+                提問與最終預覽 API 已完成；完整操作介面會在 Phase 4 接上，目前仍不會寫入 GitHub。
               </small>
             </div>
           )}
