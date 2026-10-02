@@ -147,7 +147,7 @@ GPT 動態提問                  │
           寫入 GitHub JSON
 ```
 
-網站 Quick Capture 必須遵守同一套流程，不建立另一套簡化規則。
+Web 手動新增不執行 AI；ChatGPT 與 Web 共用同一份 Fragment Schema 與 GitHub Source of Truth。
 
 ---
 
