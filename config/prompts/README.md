@@ -1,76 +1,58 @@
-# FragmentHub GPT Prompt Policy
+# FragmentHub ChatGPT Prompt Policy
 
-Phase 3 的可執行 Prompt 由 `lib/ai/prompts.ts` 組裝，並直接引用：
+這個目錄只保存 **ChatGPT 操作規則的參考文件**，不是 Web Runtime Prompt。
+
+FragmentHub Web 不呼叫 OpenAI API，也不載入這裡的 Prompt 執行 AI 分析。
+
+正式規則來源：
 
 - `config/classification.json`
 - `config/domains.json`
+- `docs/DATA_SPEC.md`
+- `docs/CHATGPT_WORKFLOW.md`
 
-這樣分類規則與 Domain 清單不需要在多份 Prompt 文件中手動同步。
+## ChatGPT 分析原則
 
-## 三個 GPT 階段
+ChatGPT 應依正式規格提出：
 
-### 1. Classification
+- Scope
+- Type
+- Status
+- Priority
+- Urgency
+- Domains
+- Tags
+- Project / Related
+- Title / Summary / Next Action
 
-輸入：使用者原始內容 + 既有 Fragment context。  
-輸出：尚未確認的分類提案。
+所有分類結果都只是提案，直到使用者確認。
 
-不得：
+## Domain
 
-- 寫入 GitHub
-- 假設分類已確認
-- 創造未核准 Domain
-- 虛構 relation ID
+只能使用 `config/domains.json` 已存在的 Domain ID。
 
-### 2. Interview
+若現有 Domain 不足，應提出新增建議，而不是自行持久化新值。
 
-只有分類已確認後才可進入。
+## 提問紀錄
 
-輸入：
+只有在分類確認後，才詢問使用者是否進入提問紀錄模式。
 
-- 原始內容
-- confirmed analysis
-- 既有 interview Q/A
+一次問一題，資訊足夠即可停止；v0.1 建議最多 6 題。
 
-輸出：
+## 最終確認
 
-- 下一個問題，或
-- complete=true
+ChatGPT 整理完成後必須再次顯示最終 Fragment，取得使用者確認後才能寫入 GitHub。
 
-一次只問一題，最多六題。
+`original_input` 不得被摘要內容覆蓋。
 
-### 3. Finalize
+## Web 邊界
 
-輸入：
+以下行為不屬於 FragmentHub Web：
 
-- 原始內容
-- confirmed analysis
-- interview
+- 模型推論
+- AI 分類
+- AI Interview
+- AI Finalize
+- OpenAI API 呼叫
 
-模型只整理：
-
-- title
-- summary
-- next_action
-- notes
-
-分類 Metadata 完全由程式保留，不交給模型重新決定。
-
-## 人類確認邊界
-
-```text
-AI Classification Proposal
-        ↓
-Human Edit / Confirm
-        ↓
-Optional Interview
-        ↓
-AI Final Text Draft
-        ↓
-Final Preview
-        ↓
-Human Confirm Save
-        ↓
-Data Layer / GitHub
-```
-
-Phase 3 到 Final Preview 為止，不負責真正寫入 GitHub。
+Web 只負責資料管理。
