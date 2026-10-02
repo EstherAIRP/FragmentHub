@@ -42,6 +42,9 @@ export default async function EditFragmentPage({
     next_action: fragment.next_action,
     original_input: fragment.original_input,
     notes: fragment.notes,
+    interview: fragment.interview,
+    source: fragment.source,
+    ai: fragment.ai,
   };
 
   const domains = Object.entries(domainsConfig.domains).map(([domainId, value]) => ({
