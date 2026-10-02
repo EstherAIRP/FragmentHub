@@ -36,3 +36,13 @@ When implementing AI-assisted Fragment workflows:
 ## Scope
 
 GitHub Actions are intentionally excluded from v0.1 unless a concrete batch-maintenance requirement is introduced.
+
+
+## AI workflow rules
+
+- Classification output is always a proposal until `confirmed: true` is produced by the human-confirmation flow.
+- AI may only persist domain IDs already defined in `config/domains.json`; a missing category must be surfaced as a suggestion, not silently created.
+- Interview may run only after classification confirmation and is limited to six answered questions in v0.1.
+- Finalization may rewrite only `title`, `summary`, `next_action`, and `notes`.
+- Finalization must preserve confirmed classification metadata and `original_input` exactly through programmatic assembly.
+- Phase 3 API routes must never write canonical Fragment data directly. Saving remains a separate, final-confirmation action.
