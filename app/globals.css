@@ -258,6 +258,26 @@ h3 {
   font-weight: 750;
 }
 
+.textButton {
+  border: 0;
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: transparent;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.textButton:hover {
+  background: #eef1f6;
+  color: #202838;
+}
+
+.saveButton {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .panel,
 .fragmentCard,
 .loginCard,
