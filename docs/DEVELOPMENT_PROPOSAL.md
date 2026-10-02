@@ -1000,6 +1000,8 @@ Phase 5 已完成 GitHub Runtime Save、即時讀取與衝突處理。
 
 Runtime Integration 已完成：
 
+- GitHub OAuth Authentication v2（PKCE + state + numeric ID allowlist）
+
 - Server-side GitHub Create / Update
 - 寫入後即時 GitHub 讀取
 - ID 配發與 Content SHA 寫入
