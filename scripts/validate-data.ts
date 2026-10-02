@@ -116,4 +116,7 @@ async function main() {
   console.log(`FragmentHub data validation passed: ${fragments.length} Fragment(s).`);
 }
 
-await main();
+main().catch((error) => {
+  console.error("FragmentHub data validation crashed:", error);
+  process.exitCode = 1;
+});
