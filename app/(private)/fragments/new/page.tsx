@@ -1,6 +1,7 @@
 import domainsConfig from "@/config/domains.json";
 import { FragmentForm } from "@/components/fragment-form";
 import { listFragments } from "@/lib/fragments";
+import { isGitHubRemoteConfigured } from "@/lib/github/availability";
 import type { ManualFragmentDraft } from "@/lib/fragments/manual-draft";
 
 const initial: ManualFragmentDraft = {
@@ -59,6 +60,7 @@ export default async function NewFragmentPage() {
         initial={initial}
         domains={domains}
         fragments={options}
+        remoteConfigured={isGitHubRemoteConfigured()}
       />
     </main>
   );
