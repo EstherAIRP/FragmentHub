@@ -953,11 +953,11 @@ scripts/
 
 ## 19. 開發階段
 
-### Phase 1：資料規格
+### Phase 1：資料規格 ✅ 已完成
 
 先確定資料模型，不先做完整 UI。
 
-內容：
+已完成：
 
 - JSON Schema
 - Scope 規則
@@ -969,6 +969,10 @@ scripts/
 - ID 規則
 - Relation 規則
 - Interview 格式
+- Canonical Data Invariants
+- JSON Schema / Zod Runtime Schema 對齊
+
+正式資料規格見 `docs/DATA_SPEC.md`。
 
 ### Phase 2：Repository 與資料層
 
