@@ -5,6 +5,7 @@ import {
   fragmentIdSchema,
   fragmentStatusSchema,
   fragmentTypeSchema,
+  interviewItemSchema,
   levelSchema,
   scopeSchema,
   slugSchema,
@@ -33,6 +34,14 @@ export const manualFragmentDraftSchema = z.object({
   next_action: z.string().max(2000).nullable(),
   original_input: z.string().trim().min(1),
   notes: z.string().nullable(),
+  interview: z.array(interviewItemSchema),
+  source: z.object({
+    channel: z.enum(["chatgpt", "web"]),
+  }),
+  ai: z.object({
+    classification_confirmed: z.literal(true),
+    interview_used: z.boolean(),
+  }),
 });
 
 export type ManualFragmentDraft = z.infer<typeof manualFragmentDraftSchema>;
@@ -45,18 +54,8 @@ export type FragmentWriteInput = Omit<
 export function toFragmentWriteInput(
   draft: ManualFragmentDraft,
 ): FragmentWriteInput {
-  const parsed = manualFragmentDraftSchema.parse(draft);
-
   return {
     schema_version: "0.1",
-    ...parsed,
-    interview: [],
-    source: {
-      channel: "web",
-    },
-    ai: {
-      classification_confirmed: true,
-      interview_used: false,
-    },
+    ...manualFragmentDraftSchema.parse(draft),
   };
 }
