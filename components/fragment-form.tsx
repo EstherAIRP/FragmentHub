@@ -202,7 +202,14 @@ export function FragmentForm({
 
   return (
     <div className="editorLayout">
-      <form className="fragmentEditor" onSubmit={buildPreview}>
+      <form
+        className="fragmentEditor"
+        onSubmit={buildPreview}
+        onChange={() => {
+          setPreviewDraft(null);
+          setSaveError(null);
+        }}
+      >
         <div className="editorSection">
           <div className="sectionHeading">
             <div>
