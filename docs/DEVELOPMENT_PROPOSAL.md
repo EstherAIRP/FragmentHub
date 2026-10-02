@@ -658,7 +658,6 @@ Fragment 與 index 僅能由 Server-side 程式讀取。
 - 搜尋
 - 新增
 - 編輯
-- 呼叫 GPT
 - 寫入 GitHub
 
 具體登入機制於實作階段決定，但必須支援單一私人使用者情境。
