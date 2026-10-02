@@ -157,7 +157,7 @@ AI 判斷
 - Phase 2：Repository 與資料層 ✅
 - Phase 3：ChatGPT 操作契約 ✅
 - Phase 4：Web MVP ✅
-- Phase 5：GitHub Runtime Integration ✅／Vercel Production Activation ⏳
+- Phase 5：GitHub Runtime Integration ✅／GitHub OAuth Authentication v2 ✅／Vercel Production Activation ⏳
 
 Phase 1 正式規格：`docs/DATA_SPEC.md`
 
@@ -179,6 +179,7 @@ npm run validate:data
 npm run build:index
 npm run test:data
 npm run test:web
+npm run test:auth
 npm run test
 npm run typecheck
 ```
