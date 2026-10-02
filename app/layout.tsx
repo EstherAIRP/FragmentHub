@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FragmentHub",
-  description: "GPT-assisted fragment management",
+  description: "Private GitHub-backed fragment management",
 };
 
 export default function RootLayout({
