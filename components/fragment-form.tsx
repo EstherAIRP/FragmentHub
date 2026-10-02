@@ -1,0 +1,396 @@
+"use client";
+
+import { useState } from "react";
+
+import {
+  manualFragmentDraftSchema,
+  toFragmentWriteInput,
+  type ManualFragmentDraft,
+} from "@/lib/fragments/manual-draft";
+import {
+  levelLabels,
+  scopeLabels,
+  statusLabels,
+  typeLabels,
+} from "@/lib/fragments/presentation";
+
+type Option = {
+  id: string;
+  label: string;
+};
+
+type FragmentOption = {
+  id: string;
+  title: string;
+  type: string;
+};
+
+type ExistingMeta = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type FragmentFormProps = {
+  mode: "new" | "edit";
+  initial: ManualFragmentDraft;
+  domains: Option[];
+  fragments: FragmentOption[];
+  existingMeta?: ExistingMeta;
+};
+
+function nullable(value: FormDataEntryValue | null) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text || null;
+}
+
+function csv(value: FormDataEntryValue | null) {
+  const text = typeof value === "string" ? value : "";
+  return Array.from(
+    new Set(
+      text
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+}
+
+export function FragmentForm({
+  mode,
+  initial,
+  domains,
+  fragments,
+  existingMeta,
+}: FragmentFormProps) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [status, setStatus] = useState(initial.status);
+
+  function buildPreview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const form = new FormData(event.currentTarget);
+    const candidate = {
+      scope: form.get("scope"),
+      type: form.get("type"),
+      status,
+      priority: form.get("priority"),
+      urgency: form.get("urgency"),
+      domains: form.getAll("domains").map(String),
+      tags: csv(form.get("tags")),
+      project: nullable(form.get("project")),
+      related: form.getAll("related").map(String),
+      title: String(form.get("title") ?? ""),
+      summary: String(form.get("summary") ?? ""),
+      next_action: nullable(form.get("next_action")),
+      original_input: String(form.get("original_input") ?? ""),
+      notes: nullable(form.get("notes")),
+    };
+
+    const parsed = manualFragmentDraftSchema.safeParse(candidate);
+
+    if (!parsed.success) {
+      setPreview(null);
+      setErrors(
+        parsed.error.issues.map((issue) => {
+          const path = issue.path.join(".") || "fragment";
+          return `${path}: ${issue.message}`;
+        }),
+      );
+      return;
+    }
+
+    setErrors([]);
+
+    const writeInput = toFragmentWriteInput(parsed.data);
+    const display =
+      mode === "edit" && existingMeta
+        ? {
+            id: existingMeta.id,
+            created_at: existingMeta.created_at,
+            updated_at: "(Phase 5 寫入時更新)",
+            ...writeInput,
+          }
+        : {
+            id: "(Phase 5 配發)",
+            created_at: "(Phase 5 產生)",
+            updated_at: "(Phase 5 產生)",
+            ...writeInput,
+          };
+
+    setPreview(JSON.stringify(display, null, 2));
+  }
+
+  return (
+    <div className="editorLayout">
+      <form className="fragmentEditor" onSubmit={buildPreview}>
+        <div className="editorSection">
+          <div className="sectionHeading">
+            <div>
+              <p className="eyebrow">Classification</p>
+              <h2>分類</h2>
+            </div>
+            <span className="muted">全部由你手動決定，不呼叫 AI</span>
+          </div>
+
+          <div className="fieldGrid">
+            <label>
+              <span>Scope</span>
+              <select name="scope" defaultValue={initial.scope}>
+                {Object.entries(scopeLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Type</span>
+              <select name="type" defaultValue={initial.type}>
+                {Object.entries(typeLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Status</span>
+              <select
+                name="status"
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as ManualFragmentDraft["status"])
+                }
+              >
+                {Object.entries(statusLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Priority</span>
+              <select name="priority" defaultValue={initial.priority}>
+                {Object.entries(levelLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Urgency</span>
+              <select name="urgency" defaultValue={initial.urgency}>
+                {Object.entries(levelLabels).map(([value, label]) => (
+                  <option value={value} key={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="editorSection">
+          <div className="sectionHeading">
+            <div>
+              <p className="eyebrow">Content</p>
+              <h2>內容</h2>
+            </div>
+          </div>
+
+          <label className="wideField">
+            <span>Title</span>
+            <input name="title" defaultValue={initial.title} required />
+          </label>
+
+          <label className="wideField">
+            <span>Summary</span>
+            <textarea
+              name="summary"
+              defaultValue={initial.summary}
+              rows={4}
+            />
+          </label>
+
+          <label className="wideField">
+            <span>Next action</span>
+            <input
+              name="next_action"
+              defaultValue={initial.next_action ?? ""}
+            />
+          </label>
+
+          <label className="wideField">
+            <span>Original input</span>
+            <textarea
+              name="original_input"
+              defaultValue={initial.original_input}
+              rows={5}
+              readOnly={mode === "edit"}
+              required
+            />
+            {mode === "edit" ? (
+              <small>依資料規格，既有 Fragment 的 original_input 不直接改寫。</small>
+            ) : null}
+          </label>
+
+          <label className="wideField">
+            <span>Notes</span>
+            <textarea
+              name="notes"
+              defaultValue={initial.notes ?? ""}
+              rows={4}
+            />
+          </label>
+        </div>
+
+        <div className="editorSection">
+          <div className="sectionHeading">
+            <div>
+              <p className="eyebrow">Metadata</p>
+              <h2>Domain 與 Tag</h2>
+            </div>
+          </div>
+
+          <fieldset className="choiceGroup">
+            <legend>Domains</legend>
+            <div className="checkboxGrid">
+              {domains.map((domain) => (
+                <label className="checkboxCard" key={domain.id}>
+                  <input
+                    type="checkbox"
+                    name="domains"
+                    value={domain.id}
+                    defaultChecked={initial.domains.includes(domain.id)}
+                  />
+                  <span>
+                    <strong>{domain.label}</strong>
+                    <small>{domain.id}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="wideField">
+            <span>Tags</span>
+            <input
+              name="tags"
+              defaultValue={initial.tags.join(", ")}
+              placeholder="ocr, workflow, memory"
+            />
+            <small>以逗號分隔；會轉成小寫 kebab-case 格式。</small>
+          </label>
+        </div>
+
+        <div className="editorSection">
+          <div className="sectionHeading">
+            <div>
+              <p className="eyebrow">Relations</p>
+              <h2>關聯</h2>
+            </div>
+          </div>
+
+          <label className="wideField">
+            <span>Project</span>
+            <select name="project" defaultValue={initial.project ?? ""}>
+              <option value="">無</option>
+              {fragments
+                .filter((fragment) => fragment.type === "project")
+                .map((fragment) => (
+                  <option value={fragment.id} key={fragment.id}>
+                    {fragment.id} · {fragment.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+
+          <fieldset className="choiceGroup">
+            <legend>Related</legend>
+            {fragments.length === 0 ? (
+              <p className="muted">目前沒有其他 Fragment 可建立關聯。</p>
+            ) : (
+              <div className="relationList">
+                {fragments.map((fragment) => (
+                  <label className="relationOption" key={fragment.id}>
+                    <input
+                      type="checkbox"
+                      name="related"
+                      value={fragment.id}
+                      defaultChecked={initial.related.includes(fragment.id)}
+                    />
+                    <span>{fragment.id}</span>
+                    <strong>{fragment.title}</strong>
+                  </label>
+                ))}
+              </div>
+            )}
+          </fieldset>
+        </div>
+
+        {errors.length > 0 ? (
+          <div className="notice danger">
+            <strong>草稿尚未通過檢查</strong>
+            <ul>
+              {errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className="editorActions">
+          {mode === "edit" && status !== "archived" ? (
+            <button
+              className="dangerButton"
+              type="button"
+              onClick={() => setStatus("archived")}
+            >
+              設為 Archived
+            </button>
+          ) : null}
+
+          <button className="primaryButton" type="submit">
+            檢查並預覽 JSON
+          </button>
+        </div>
+      </form>
+
+      <aside className="draftPreview">
+        <div className="sectionHeading">
+          <div>
+            <p className="eyebrow">Draft preview</p>
+            <h2>待儲存草稿</h2>
+          </div>
+        </div>
+
+        {preview ? (
+          <>
+            <pre>{preview}</pre>
+            <div className="notice">
+              <strong>Phase 4 不會寫入 GitHub</strong>
+              <p>
+                這份 JSON 已準備好交給 Phase 5 的 GitHub Store。正式儲存仍需要再按一次確認。
+              </p>
+            </div>
+            <button className="disabledButton" type="button" disabled>
+              Phase 5：確認並寫入 GitHub
+            </button>
+          </>
+        ) : (
+          <div className="previewEmpty">
+            填寫表單後按「檢查並預覽 JSON」，這裡會顯示待寫入資料。
+          </div>
+        )}
+      </aside>
+    </div>
+  );
+}
