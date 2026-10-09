@@ -10,13 +10,13 @@ export function AppNav({ session }: { session: AuthSession }) {
           <span className="brandMark">F</span>
           <span>
             <strong>FragmentHub</strong>
-            <small>Private fragment workspace</small>
+            <small>私人 Fragment 工作區</small>
           </span>
         </Link>
 
         <nav className="navLinks" aria-label="主要導覽">
           <Link href="/">總覽</Link>
-          <Link href="/fragments">Fragments</Link>
+          <Link href="/fragments">Fragment</Link>
           <Link href="/fragments/new">新增</Link>
         </nav>
 

@@ -1,4 +1,5 @@
 import type { Fragment } from "@/lib/fragment-schema";
+import { domainLabel } from "@/lib/fragments/presentation";
 
 export type FragmentFilters = {
   q?: string;
@@ -43,7 +44,11 @@ export function filterFragments(
           fragment.id,
           fragment.title,
           fragment.summary,
+          fragment.next_action ?? "",
+          fragment.notes ?? "",
+          fragment.original_input,
           fragment.domains.join(" "),
+          fragment.domains.map(domainLabel).join(" "),
           fragment.tags.join(" "),
         ]
           .join(" ")

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import domainsConfig from "@/config/domains.json";
 import { FragmentForm } from "@/components/fragment-form";
 import { listFragments } from "@/lib/fragments";
+import { collectTags } from "@/lib/fragments/query";
 import { isGitHubRemoteConfigured } from "@/lib/github/availability";
 import type { ManualFragmentDraft } from "@/lib/fragments/manual-draft";
 
@@ -78,6 +79,7 @@ export default async function EditFragmentPage({
         initial={initial}
         domains={domains}
         fragments={options}
+        tagSuggestions={collectTags(fragments)}
         remoteConfigured={isGitHubRemoteConfigured()}
         existingMeta={{
           id: fragment.id,

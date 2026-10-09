@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { FragmentCard } from "@/components/fragment-card";
 import { listFragments } from "@/lib/fragments";
+import { statusLabels } from "@/lib/fragments/presentation";
 
 export default async function DashboardPage() {
   const fragments = await listFragments();
@@ -19,7 +20,6 @@ export default async function DashboardPage() {
     <main className="pageShell">
       <section className="dashboardHero">
         <div>
-          <p className="eyebrow">FragmentHub · Web MVP</p>
           <h1>你的碎片，集中在同一個資料池。</h1>
           <p className="heroCopy">
             Web 不執行 AI 分析；這裡只負責瀏覽、搜尋、篩選與手動管理 GitHub Fragment。
@@ -42,15 +42,15 @@ export default async function DashboardPage() {
           <strong>{stats.total}</strong>
         </article>
         <article>
-          <span>Actionable</span>
+          <span>{statusLabels.actionable}</span>
           <strong>{stats.actionable}</strong>
         </article>
         <article>
-          <span>Active</span>
+          <span>{statusLabels.active}</span>
           <strong>{stats.active}</strong>
         </article>
         <article>
-          <span>Waiting</span>
+          <span>{statusLabels.waiting}</span>
           <strong>{stats.waiting}</strong>
         </article>
         <article>
@@ -66,7 +66,6 @@ export default async function DashboardPage() {
       <section className="panel">
         <div className="panelHeader">
           <div>
-            <p className="eyebrow">Recent</p>
             <h2>最近更新</h2>
           </div>
           <Link className="textLink" href="/fragments">

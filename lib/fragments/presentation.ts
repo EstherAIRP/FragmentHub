@@ -1,3 +1,6 @@
+import domainsConfig from "@/config/domains.json";
+import type { Fragment } from "@/lib/fragment-schema";
+
 export const scopeLabels = {
   personal: "個人",
   work: "工作",
@@ -17,23 +20,85 @@ export const typeLabels = {
 } as const;
 
 export const statusLabels = {
-  inbox: "Inbox",
-  seed: "Seed",
-  exploring: "Exploring",
-  defined: "Defined",
-  actionable: "Actionable",
-  active: "Active",
-  waiting: "Waiting",
-  done: "Done",
-  archived: "Archived",
+  inbox: "收件匣",
+  seed: "種子",
+  exploring: "探索中",
+  defined: "已定義",
+  actionable: "可執行",
+  active: "進行中",
+  waiting: "等待中",
+  done: "已完成",
+  archived: "已封存",
 } as const;
 
 export const levelLabels = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-  none: "None",
+  high: "高",
+  medium: "中",
+  low: "低",
+  none: "無",
 } as const;
+
+export const sourceChannelLabels = {
+  chatgpt: "ChatGPT",
+  web: "Web 手動",
+} as const;
+
+export const fieldLabels = {
+  scope: "範圍",
+  type: "類型",
+  status: "狀態",
+  priority: "優先度",
+  urgency: "急迫度",
+  domains: "領域",
+  tags: "標籤",
+  title: "標題",
+  summary: "摘要",
+  next_action: "下一步",
+  original_input: "原始輸入",
+  notes: "備註",
+  project: "所屬專案",
+  related: "相關",
+  created_at: "建立時間",
+  updated_at: "更新時間",
+  source: "來源",
+  interview: "提問紀錄",
+} as const;
+
+export function fieldLabel(path: string) {
+  return fieldLabels[path as keyof typeof fieldLabels] ?? path;
+}
+
+/**
+ * Status chip tone, expressed as the CSS class applied to `.statusChip`.
+ */
+export const statusTones = {
+  inbox: "toneBlue",
+  seed: "toneViolet",
+  exploring: "toneViolet",
+  defined: "toneViolet",
+  actionable: "toneGreen",
+  active: "toneGreen",
+  waiting: "toneAmber",
+  done: "toneMuted",
+  archived: "toneFaded",
+} as const satisfies Record<Fragment["status"], string>;
+
+export function isSettledStatus(status: Fragment["status"]) {
+  return status === "done" || status === "archived";
+}
+
+const domainEntries: Record<string, { label: string }> = domainsConfig.domains;
+
+export function domainLabel(id: string): string {
+  return domainEntries[id]?.label ?? id;
+}
+
+export const domainOptions = Object.entries(domainEntries).map(
+  ([id, value]) => ({
+    id,
+    label: value.label,
+  }),
+);
 
 export function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("zh-TW", {
