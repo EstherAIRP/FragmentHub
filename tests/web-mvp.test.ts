@@ -6,7 +6,9 @@ import {
   manualFragmentDraftSchema,
   toFragmentWriteInput,
 } from "../lib/fragments/manual-draft";
+import { domainLabel } from "../lib/fragments/presentation";
 import { filterFragments } from "../lib/fragments/query";
+import { normalizeTag, normalizeTags } from "../lib/fragments/tags";
 import { prepareCreateInput, prepareReplacement } from "../lib/fragments/write";
 
 function fragment(overrides: Partial<Fragment> = {}): Fragment {
@@ -199,4 +201,48 @@ test("Web edit preserves immutable source, interview and original input", () => 
   assert.equal(replacement.ai.interview_used, true);
   assert.equal(replacement.title, "Changed title");
   assert.equal(replacement.status, "active");
+});
+
+test("fragment search also matches next action, notes, original input and domain labels", () => {
+  const items = [
+    fragment({
+      id: "F-000001",
+      title: "Vision idea",
+      domains: ["computer-vision"],
+      next_action: "Collect sample images",
+    }),
+    fragment({
+      id: "F-000002",
+      title: "Notes only",
+      domains: ["life"],
+      notes: "Remember the dentist",
+      original_input: "週末要整理書櫃",
+    }),
+  ];
+
+  const ids = (q: string) =>
+    filterFragments(items, { q }).map((item) => item.id);
+
+  assert.deepEqual(ids("電腦視覺"), ["F-000001"]);
+  assert.deepEqual(ids("sample images"), ["F-000001"]);
+  assert.deepEqual(ids("dentist"), ["F-000002"]);
+  assert.deepEqual(ids("整理書櫃"), ["F-000002"]);
+  assert.deepEqual(ids("computer-vision"), ["F-000001"]);
+});
+
+test("domainLabel resolves configured labels and falls back to the ID", () => {
+  assert.equal(domainLabel("computer-vision"), "電腦視覺");
+  assert.equal(domainLabel("not-a-domain"), "not-a-domain");
+});
+
+test("normalizeTag produces lowercase kebab-case tags", () => {
+  assert.equal(normalizeTag("  OCR  "), "ocr");
+  assert.equal(normalizeTag("Fragment Management"), "fragment-management");
+  assert.equal(normalizeTag("snake_case__tag"), "snake-case-tag");
+  assert.equal(normalizeTag("a - b"), "a-b");
+  assert.equal(normalizeTag("   "), "");
+  assert.deepEqual(normalizeTags(["OCR", "ocr", " ", "Work Flow"]), [
+    "ocr",
+    "work-flow",
+  ]);
 });

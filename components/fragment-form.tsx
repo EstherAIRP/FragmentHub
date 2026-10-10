@@ -3,17 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { TagInput } from "@/components/tag-input";
 import {
   manualFragmentDraftSchema,
   toFragmentWriteInput,
   type ManualFragmentDraft,
 } from "@/lib/fragments/manual-draft";
 import {
+  fieldLabel,
+  fieldLabels,
   levelLabels,
   scopeLabels,
   statusLabels,
   typeLabels,
 } from "@/lib/fragments/presentation";
+import { normalizeTags } from "@/lib/fragments/tags";
 
 type Option = {
   id: string;
@@ -37,6 +41,7 @@ type FragmentFormProps = {
   initial: ManualFragmentDraft;
   domains: Option[];
   fragments: FragmentOption[];
+  tagSuggestions: string[];
   remoteConfigured: boolean;
   existingMeta?: ExistingMeta;
 };
@@ -54,22 +59,12 @@ function nullable(value: FormDataEntryValue | null) {
   return text || null;
 }
 
-function csv(value: FormDataEntryValue | null) {
-  const text = typeof value === "string" ? value : "";
-  return Array.from(
-    new Set(
-      text
-        .split(",")
-        .map((item) =>
-          item
-            .trim()
-            .toLowerCase()
-            .replace(/[_\s]+/g, "-")
-            .replace(/-+/g, "-"),
-        )
-        .filter(Boolean),
-    ),
-  );
+function issueMessage(issue: { path: PropertyKey[]; message: string }) {
+  const [head, ...rest] = issue.path.map(String);
+  if (head === undefined) return `Fragment：${issue.message}`;
+
+  const label = [fieldLabel(head), ...rest].join(".");
+  return `${label}：${issue.message}`;
 }
 
 export function FragmentForm({
@@ -77,6 +72,7 @@ export function FragmentForm({
   initial,
   domains,
   fragments,
+  tagSuggestions,
   remoteConfigured,
   existingMeta,
 }: FragmentFormProps) {
@@ -87,6 +83,12 @@ export function FragmentForm({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(initial.status);
+
+  // Any edit invalidates the confirmed preview; the user must re-check first.
+  function invalidatePreview() {
+    setPreviewDraft(null);
+    setSaveError(null);
+  }
 
   function buildPreview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,7 +101,7 @@ export function FragmentForm({
       priority: form.get("priority"),
       urgency: form.get("urgency"),
       domains: form.getAll("domains").map(String),
-      tags: csv(form.get("tags")),
+      tags: normalizeTags(form.getAll("tags").map(String)),
       project: nullable(form.get("project")),
       related: form.getAll("related").map(String),
       title: String(form.get("title") ?? ""),
@@ -120,12 +122,7 @@ export function FragmentForm({
     if (!parsed.success) {
       setPreviewDraft(null);
       setSaveError(null);
-      setErrors(
-        parsed.error.issues.map((issue) => {
-          const path = issue.path.join(".") || "fragment";
-          return `${path}: ${issue.message}`;
-        }),
-      );
+      setErrors(parsed.error.issues.map(issueMessage));
       return;
     }
 
@@ -205,15 +202,11 @@ export function FragmentForm({
       <form
         className="fragmentEditor"
         onSubmit={buildPreview}
-        onChange={() => {
-          setPreviewDraft(null);
-          setSaveError(null);
-        }}
+        onChange={invalidatePreview}
       >
         <div className="editorSection">
           <div className="sectionHeading">
             <div>
-              <p className="eyebrow">Classification</p>
               <h2>分類</h2>
             </div>
             <span className="muted">全部由你手動決定，不呼叫 AI</span>
@@ -221,7 +214,7 @@ export function FragmentForm({
 
           <div className="fieldGrid">
             <label>
-              <span>Scope</span>
+              <span>{fieldLabels.scope}</span>
               <select name="scope" defaultValue={initial.scope}>
                 {Object.entries(scopeLabels).map(([value, label]) => (
                   <option value={value} key={value}>
@@ -232,7 +225,7 @@ export function FragmentForm({
             </label>
 
             <label>
-              <span>Type</span>
+              <span>{fieldLabels.type}</span>
               <select name="type" defaultValue={initial.type}>
                 {Object.entries(typeLabels).map(([value, label]) => (
                   <option value={value} key={value}>
@@ -243,7 +236,7 @@ export function FragmentForm({
             </label>
 
             <label>
-              <span>Status</span>
+              <span>{fieldLabels.status}</span>
               <select
                 name="status"
                 value={status}
@@ -251,7 +244,7 @@ export function FragmentForm({
                   setStatus(
                     event.target.value as ManualFragmentDraft["status"],
                   );
-                  setPreviewDraft(null);
+                  invalidatePreview();
                 }}
               >
                 {Object.entries(statusLabels).map(([value, label]) => (
@@ -263,7 +256,7 @@ export function FragmentForm({
             </label>
 
             <label>
-              <span>Priority</span>
+              <span>{fieldLabels.priority}</span>
               <select name="priority" defaultValue={initial.priority}>
                 {Object.entries(levelLabels).map(([value, label]) => (
                   <option value={value} key={value}>
@@ -274,7 +267,7 @@ export function FragmentForm({
             </label>
 
             <label>
-              <span>Urgency</span>
+              <span>{fieldLabels.urgency}</span>
               <select name="urgency" defaultValue={initial.urgency}>
                 {Object.entries(levelLabels).map(([value, label]) => (
                   <option value={value} key={value}>
@@ -289,18 +282,17 @@ export function FragmentForm({
         <div className="editorSection">
           <div className="sectionHeading">
             <div>
-              <p className="eyebrow">Content</p>
               <h2>內容</h2>
             </div>
           </div>
 
           <label className="wideField">
-            <span>Title</span>
+            <span>{fieldLabels.title}</span>
             <input name="title" defaultValue={initial.title} required />
           </label>
 
           <label className="wideField">
-            <span>Summary</span>
+            <span>{fieldLabels.summary}</span>
             <textarea
               name="summary"
               defaultValue={initial.summary}
@@ -309,7 +301,7 @@ export function FragmentForm({
           </label>
 
           <label className="wideField">
-            <span>Next action</span>
+            <span>{fieldLabels.next_action}</span>
             <input
               name="next_action"
               defaultValue={initial.next_action ?? ""}
@@ -317,7 +309,7 @@ export function FragmentForm({
           </label>
 
           <label className="wideField">
-            <span>Original input</span>
+            <span>{fieldLabels.original_input}</span>
             <textarea
               name="original_input"
               defaultValue={initial.original_input}
@@ -327,13 +319,13 @@ export function FragmentForm({
             />
             {mode === "edit" ? (
               <small>
-                依資料規格，既有 Fragment 的 original_input 不直接改寫。
+                依資料規格，既有 Fragment 的原始輸入不直接改寫。
               </small>
             ) : null}
           </label>
 
           <label className="wideField">
-            <span>Notes</span>
+            <span>{fieldLabels.notes}</span>
             <textarea
               name="notes"
               defaultValue={initial.notes ?? ""}
@@ -345,13 +337,12 @@ export function FragmentForm({
         <div className="editorSection">
           <div className="sectionHeading">
             <div>
-              <p className="eyebrow">Metadata</p>
-              <h2>Domain 與 Tag</h2>
+              <h2>領域與標籤</h2>
             </div>
           </div>
 
           <fieldset className="choiceGroup">
-            <legend>Domains</legend>
+            <legend>{fieldLabels.domains}</legend>
             <div className="checkboxGrid">
               {domains.map((domain) => (
                 <label className="checkboxCard" key={domain.id}>
@@ -370,27 +361,24 @@ export function FragmentForm({
             </div>
           </fieldset>
 
-          <label className="wideField">
-            <span>Tags</span>
-            <input
-              name="tags"
-              defaultValue={initial.tags.join(", ")}
-              placeholder="ocr, workflow, memory"
-            />
-            <small>以逗號分隔；會轉成小寫 kebab-case 格式。</small>
-          </label>
+          <TagInput
+            name="tags"
+            label={fieldLabels.tags}
+            defaultValue={initial.tags}
+            suggestions={tagSuggestions}
+            onChange={invalidatePreview}
+          />
         </div>
 
         <div className="editorSection">
           <div className="sectionHeading">
             <div>
-              <p className="eyebrow">Relations</p>
               <h2>關聯</h2>
             </div>
           </div>
 
           <label className="wideField">
-            <span>Project</span>
+            <span>{fieldLabels.project}</span>
             <select name="project" defaultValue={initial.project ?? ""}>
               <option value="">無</option>
               {fragments
@@ -404,7 +392,7 @@ export function FragmentForm({
           </label>
 
           <fieldset className="choiceGroup">
-            <legend>Related</legend>
+            <legend>{fieldLabels.related}</legend>
             {fragments.length === 0 ? (
               <p className="muted">目前沒有其他 Fragment 可建立關聯。</p>
             ) : (
@@ -444,10 +432,10 @@ export function FragmentForm({
               type="button"
               onClick={() => {
                 setStatus("archived");
-                setPreviewDraft(null);
+                invalidatePreview();
               }}
             >
-              設為 Archived
+              設為已封存
             </button>
           ) : null}
 
@@ -460,7 +448,6 @@ export function FragmentForm({
       <aside className="draftPreview">
         <div className="sectionHeading">
           <div>
-            <p className="eyebrow">Final preview</p>
             <h2>待儲存 JSON</h2>
           </div>
         </div>

@@ -37,12 +37,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <span className="brandMark">F</span>
           <span>
             <strong>FragmentHub</strong>
-            <small>Private fragment workspace</small>
+            <small>私人 Fragment 工作區</small>
           </span>
         </div>
 
         <div>
-          <p className="eyebrow">Private access</p>
           <h1 className="loginTitle">登入 FragmentHub</h1>
           <p className="subtle">
             使用 GitHub 確認身分。Web 只負責瀏覽與管理 Fragment，

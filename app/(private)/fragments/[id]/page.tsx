@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { StatusChip } from "@/components/status-chip";
+import type { Fragment } from "@/lib/fragment-schema";
 import { listFragments } from "@/lib/fragments";
 import {
+  domainLabel,
+  fieldLabels,
   formatTimestamp,
   levelLabels,
   scopeLabels,
-  statusLabels,
+  sourceChannelLabels,
   typeLabels,
 } from "@/lib/fragments/presentation";
 
@@ -43,10 +47,10 @@ export default async function FragmentDetailPage({
       <section className="detailHeader">
         <div>
           <div className="fragmentMeta">
-            <span>{fragment.id}</span>
+            <StatusChip status={fragment.status} />
             <span>{scopeLabels[fragment.scope]}</span>
             <span>{typeLabels[fragment.type]}</span>
-            <span>{statusLabels[fragment.status]}</span>
+            <span className="fragmentId">{fragment.id}</span>
           </div>
           <h1>{fragment.title}</h1>
           <p className="heroCopy">{fragment.summary || "尚未填寫摘要。"}</p>
@@ -64,7 +68,7 @@ export default async function FragmentDetailPage({
               className="dangerButton linkButton"
               href={`/fragments/${fragment.id}/edit?archive=1`}
             >
-              Archive
+              封存
             </Link>
           ) : null}
         </div>
@@ -73,20 +77,19 @@ export default async function FragmentDetailPage({
       <section className="detailGrid">
         <div className="detailMain">
           <article className="panel detailSection">
-            <p className="eyebrow">Content</p>
             <h2>內容</h2>
 
             <dl className="detailList">
               <div>
-                <dt>Next action</dt>
+                <dt>{fieldLabels.next_action}</dt>
                 <dd>{fragment.next_action || "—"}</dd>
               </div>
               <div>
-                <dt>Notes</dt>
+                <dt>{fieldLabels.notes}</dt>
                 <dd className="preserveText">{fragment.notes || "—"}</dd>
               </div>
               <div>
-                <dt>Original input</dt>
+                <dt>{fieldLabels.original_input}</dt>
                 <dd className="preserveText">{fragment.original_input}</dd>
               </div>
             </dl>
@@ -94,7 +97,6 @@ export default async function FragmentDetailPage({
 
           {fragment.interview.length > 0 ? (
             <article className="panel detailSection">
-              <p className="eyebrow">Interview</p>
               <h2>提問紀錄</h2>
               <div className="interviewList">
                 {fragment.interview.map((item, index) => (
@@ -109,49 +111,47 @@ export default async function FragmentDetailPage({
 
           {(children.length > 0 || related.length > 0 || backlinks.length > 0) ? (
             <article className="panel detailSection">
-              <p className="eyebrow">Relations</p>
               <h2>關聯</h2>
 
               {children.length > 0 ? (
-                <RelationGroup title="Project children" items={children} />
+                <RelationGroup title="子項目" items={children} />
               ) : null}
               {related.length > 0 ? (
-                <RelationGroup title="Related" items={related} />
+                <RelationGroup title={fieldLabels.related} items={related} />
               ) : null}
               {backlinks.length > 0 ? (
-                <RelationGroup title="Backlinks" items={backlinks} />
+                <RelationGroup title="反向連結" items={backlinks} />
               ) : null}
             </article>
           ) : null}
         </div>
 
         <aside className="panel detailSidebar">
-          <p className="eyebrow">Metadata</p>
           <h2>資料</h2>
 
           <dl className="metadataList">
             <div>
-              <dt>Priority</dt>
+              <dt>{fieldLabels.priority}</dt>
               <dd>{levelLabels[fragment.priority]}</dd>
             </div>
             <div>
-              <dt>Urgency</dt>
+              <dt>{fieldLabels.urgency}</dt>
               <dd>{levelLabels[fragment.urgency]}</dd>
             </div>
             <div>
-              <dt>Created</dt>
+              <dt>{fieldLabels.created_at}</dt>
               <dd>{formatTimestamp(fragment.created_at)}</dd>
             </div>
             <div>
-              <dt>Updated</dt>
+              <dt>{fieldLabels.updated_at}</dt>
               <dd>{formatTimestamp(fragment.updated_at)}</dd>
             </div>
             <div>
-              <dt>Source</dt>
-              <dd>{fragment.source.channel}</dd>
+              <dt>{fieldLabels.source}</dt>
+              <dd>{sourceChannelLabels[fragment.source.channel]}</dd>
             </div>
             <div>
-              <dt>Project</dt>
+              <dt>{fieldLabels.project}</dt>
               <dd>
                 {project ? (
                   <Link href={`/fragments/${project.id}`}>
@@ -165,12 +165,12 @@ export default async function FragmentDetailPage({
           </dl>
 
           <div className="sidebarGroup">
-            <strong>Domains</strong>
+            <strong>{fieldLabels.domains}</strong>
             <div className="tags">
               {fragment.domains.length > 0
                 ? fragment.domains.map((domain) => (
-                    <span className="domainChip" key={domain}>
-                      {domain}
+                    <span className="domainChip" key={domain} title={domain}>
+                      {domainLabel(domain)}
                     </span>
                   ))
                 : "—"}
@@ -178,7 +178,7 @@ export default async function FragmentDetailPage({
           </div>
 
           <div className="sidebarGroup">
-            <strong>Tags</strong>
+            <strong>{fieldLabels.tags}</strong>
             <div className="tags">
               {fragment.tags.length > 0
                 ? fragment.tags.map((tag) => <span key={tag}>#{tag}</span>)
@@ -196,7 +196,7 @@ function RelationGroup({
   items,
 }: {
   title: string;
-  items: Array<{ id: string; title: string; type: string }>;
+  items: Array<{ id: string; title: string; type: Fragment["type"] }>;
 }) {
   return (
     <div className="relationGroup">
@@ -206,7 +206,7 @@ function RelationGroup({
           <Link href={`/fragments/${item.id}`} key={item.id}>
             <span>{item.id}</span>
             <strong>{item.title}</strong>
-            <small>{item.type}</small>
+            <small>{typeLabels[item.type]}</small>
           </Link>
         ))}
       </div>

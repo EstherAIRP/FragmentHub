@@ -10,7 +10,7 @@ export default function NotFound() {
           這個 ID 不存在，或目前 Repository 中尚未包含這筆資料。
         </p>
         <Link className="primaryButton linkButton" href="/fragments">
-          回到 Fragments
+          回到 Fragment 庫
         </Link>
       </section>
     </main>
