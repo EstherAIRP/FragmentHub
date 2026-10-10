@@ -35,7 +35,7 @@ data/fragments/
 
   "scope": "work",
   "type": "requirement",
-  "status": "exploring",
+  "status": "incubating",
   "priority": "high",
   "urgency": "medium",
 
@@ -172,34 +172,31 @@ F-000001
 
 Status 是 Fragment 的目前生命週期狀態。
 
-| Status | 說明 |
-|---|---|
-| `inbox` | 已決定保留，但刻意暫不進一步整理 |
-| `seed` | 初步形成、資訊仍少 |
-| `exploring` | 正在研究、討論或補充資訊 |
-| `defined` | 範圍與內容已相對明確 |
-| `actionable` | 已有清楚下一步，可開始執行 |
-| `active` | 正在執行、學習或推進 |
-| `waiting` | 等待外部回覆、條件、時間或依賴 |
-| `done` | 主要目的已完成 |
-| `archived` | 不再主動處理，但保留紀錄 |
+| Status | 中文 | 說明 |
+|---|---|---|
+| `incubating` | 醞釀中 | 想法仍在成形、資訊仍少，暫不排入執行 |
+| `inbox` | 待處理 | 已決定要處理，等待開始 |
+| `active` | 進行中 | 正在執行、學習或推進 |
+| `waiting` | 卡住 | 等待外部回覆、條件、時間或依賴而無法推進 |
+| `done` | 完成 | 主要目的已完成 |
+| `archived` | 已封存 | 不再主動處理，但保留紀錄；不顯示在看板上 |
 
 ### 6.1 建議狀態
 
 Status 不強制固定轉移順序，但各 type 建議使用：
 
-- idea：`seed → exploring → defined → actionable → active → done`
-- learning：`seed/exploring → defined → active → done`
-- requirement：`exploring → defined → actionable → done`
-- task：`actionable → active/waiting → done`
-- project：`defined → active/waiting → done`
-- question：`exploring → defined/done`
-- decision：`defined → done`
+- idea：`incubating → inbox → active → done`
+- learning：`incubating → inbox → active → done`
+- requirement：`incubating → inbox → active/waiting → done`
+- task：`inbox → active/waiting → done`
+- project：`incubating → inbox → active/waiting → done`
+- question：`incubating → inbox → done`
+- decision：`incubating → inbox → done`
 - tracking：`active/waiting → done`
-- resource：`defined → archived`
-- note：`defined → archived`
+- resource：`inbox → archived`
+- note：`inbox → archived`
 
-任何 type 都可在需要時使用 `inbox` 或 `archived`。
+任何 type 都可在需要時使用 `archived`（優先於刪除）。
 
 ---
 

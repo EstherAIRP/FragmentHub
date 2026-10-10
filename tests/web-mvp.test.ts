@@ -1,13 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { fragmentSchema, type Fragment } from "../lib/fragment-schema";
+import {
+  fragmentSchema,
+  fragmentStatusSchema,
+  type Fragment,
+} from "../lib/fragment-schema";
+import {
+  boardScore,
+  countRecentlyDone,
+  filterByScope,
+  groupBoard,
+  listIncubating,
+  parseBoardScope,
+} from "../lib/fragments/board";
 import {
   manualFragmentDraftSchema,
   toFragmentWriteInput,
 } from "../lib/fragments/manual-draft";
 import { domainLabel } from "../lib/fragments/presentation";
 import { filterFragments } from "../lib/fragments/query";
+import { buildStatusMoveDraft } from "../lib/fragments/status-move";
 import { normalizeTag, normalizeTags } from "../lib/fragments/tags";
 import { prepareCreateInput, prepareReplacement } from "../lib/fragments/write";
 
@@ -19,7 +32,7 @@ function fragment(overrides: Partial<Fragment> = {}): Fragment {
     updated_at: "2026-10-02T16:00:00+08:00",
     scope: "personal",
     type: "note",
-    status: "defined",
+    status: "inbox",
     priority: "none",
     urgency: "none",
     domains: ["knowledge-management"],
@@ -72,7 +85,7 @@ test("manual draft rejects unregistered domains", () => {
   const result = manualFragmentDraftSchema.safeParse({
     scope: "personal",
     type: "note",
-    status: "defined",
+    status: "inbox",
     priority: "none",
     urgency: "none",
     domains: ["made-up-domain"],
@@ -99,7 +112,7 @@ test("manual Web draft becomes canonical write input without AI runtime", () => 
   const draft = manualFragmentDraftSchema.parse({
     scope: "work",
     type: "task",
-    status: "actionable",
+    status: "inbox",
     priority: "high",
     urgency: "medium",
     domains: ["automation-rpa"],
@@ -132,7 +145,7 @@ test("Web create ignores forged system metadata", () => {
   const draft = manualFragmentDraftSchema.parse({
     scope: "personal",
     type: "note",
-    status: "defined",
+    status: "inbox",
     priority: "none",
     urgency: "none",
     domains: ["knowledge-management"],
@@ -245,4 +258,128 @@ test("normalizeTag produces lowercase kebab-case tags", () => {
     "ocr",
     "work-flow",
   ]);
+});
+
+test("status enum rejects removed lifecycle values", () => {
+  assert.deepEqual(fragmentStatusSchema.options, [
+    "incubating",
+    "inbox",
+    "active",
+    "waiting",
+    "done",
+    "archived",
+  ]);
+
+  for (const status of ["seed", "exploring", "defined", "actionable"]) {
+    assert.equal(fragmentStatusSchema.safeParse(status).success, false);
+    assert.throws(() => fragment({ status: status as Fragment["status"] }));
+  }
+});
+
+test("board groups inbox/active/waiting and sorts by score then recency", () => {
+  const items = [
+    fragment({ id: "F-000001", status: "inbox", priority: "low", urgency: "low", updated_at: "2026-10-05T00:00:00+08:00" }),
+    fragment({ id: "F-000002", status: "inbox", priority: "high", urgency: "none", updated_at: "2026-10-03T00:00:00+08:00" }),
+    fragment({ id: "F-000003", status: "inbox", priority: "medium", urgency: "medium", updated_at: "2026-10-04T00:00:00+08:00" }),
+    fragment({ id: "F-000004", status: "inbox", priority: "high", urgency: "high", updated_at: "2026-10-02T16:00:00+08:00" }),
+    fragment({ id: "F-000005", status: "active" }),
+    fragment({ id: "F-000006", status: "waiting" }),
+    fragment({ id: "F-000007", status: "incubating" }),
+    fragment({ id: "F-000008", status: "done" }),
+    fragment({ id: "F-000009", status: "archived" }),
+  ];
+
+  const columns = groupBoard(items);
+
+  assert.equal(boardScore({ priority: "high", urgency: "medium" }), 5);
+  // F-000004 scores 6; F-000003 (4) beats F-000002 (3) on score; ties fall back to updated_at.
+  assert.deepEqual(
+    columns.inbox.map((item) => item.id),
+    ["F-000004", "F-000003", "F-000002", "F-000001"],
+  );
+  assert.deepEqual(columns.active.map((item) => item.id), ["F-000005"]);
+  assert.deepEqual(columns.waiting.map((item) => item.id), ["F-000006"]);
+});
+
+test("board breaks score ties by most recent update", () => {
+  const columns = groupBoard([
+    fragment({ id: "F-000001", status: "active", updated_at: "2026-10-03T00:00:00+08:00" }),
+    fragment({ id: "F-000002", status: "active", updated_at: "2026-10-05T00:00:00+08:00" }),
+  ]);
+
+  assert.deepEqual(columns.active.map((item) => item.id), ["F-000002", "F-000001"]);
+});
+
+test("board scope parsing and filtering", () => {
+  const items = [
+    fragment({ id: "F-000001", scope: "work" }),
+    fragment({ id: "F-000002", scope: "personal" }),
+  ];
+
+  assert.equal(parseBoardScope("work"), "work");
+  assert.equal(parseBoardScope("personal"), "personal");
+  assert.equal(parseBoardScope("bogus"), "all");
+  assert.equal(parseBoardScope(undefined), "all");
+  assert.deepEqual(filterByScope(items, "work").map((item) => item.id), ["F-000001"]);
+  assert.equal(filterByScope(items, "all").length, 2);
+});
+
+test("incubating list holds only incubating Fragments, newest first", () => {
+  const items = listIncubating([
+    fragment({ id: "F-000001", status: "incubating", updated_at: "2026-10-03T00:00:00+08:00" }),
+    fragment({ id: "F-000002", status: "incubating", updated_at: "2026-10-06T00:00:00+08:00" }),
+    fragment({ id: "F-000003", status: "inbox" }),
+    fragment({ id: "F-000004", status: "archived" }),
+  ]);
+
+  assert.deepEqual(items.map((item) => item.id), ["F-000002", "F-000001"]);
+});
+
+test("recently done counts done Fragments updated within 7 days", () => {
+  const now = new Date("2026-10-10T12:00:00+08:00");
+  const items = [
+    fragment({ id: "F-000001", status: "done", updated_at: "2026-10-09T00:00:00+08:00" }),
+    fragment({ id: "F-000002", status: "done", updated_at: "2026-10-03T13:00:00+08:00" }),
+    fragment({ id: "F-000003", status: "done", updated_at: "2026-10-02T16:00:00+08:00" }),
+    fragment({ id: "F-000004", status: "active", updated_at: "2026-10-09T00:00:00+08:00" }),
+  ];
+
+  assert.equal(countRecentlyDone(items, now), 2);
+});
+
+test("status move draft round-trips every stored field except status", () => {
+  const current = fragment({
+    status: "inbox",
+    scope: "work",
+    type: "task",
+    priority: "high",
+    urgency: "medium",
+    domains: ["automation-rpa", "ai"],
+    tags: ["ocr", "rpa"],
+    title: "OCR check",
+    summary: "Check OCR flow.",
+    next_action: "Run test.",
+    notes: "Some notes.",
+    original_input: "  Keep  original\nwhitespace  ",
+    interview: [{ question: "Q?", answer: "A" }],
+    source: { channel: "chatgpt" },
+    ai: { classification_confirmed: true, interview_used: true },
+  });
+
+  const move = buildStatusMoveDraft(current);
+  assert.equal(move.ok, true);
+  if (!move.ok) return;
+
+  const draft = manualFragmentDraftSchema.parse({ ...move.draft, status: "done" });
+  const replacement = prepareReplacement(current, draft);
+
+  assert.deepEqual(replacement, { ...current, status: "done" });
+});
+
+test("status move refuses Fragments the draft schema would alter or reject", () => {
+  const padded = fragment({ title: " Padded title " });
+  const unknownDomain = fragment({ domains: ["not-a-domain"] });
+
+  assert.equal(buildStatusMoveDraft(padded).ok, false);
+  assert.equal(buildStatusMoveDraft(unknownDomain).ok, false);
 });

@@ -15,7 +15,7 @@ export function AppNav({ session }: { session: AuthSession }) {
         </Link>
 
         <nav className="navLinks" aria-label="主要導覽">
-          <Link href="/">總覽</Link>
+          <Link href="/">看板</Link>
           <Link href="/fragments">Fragment</Link>
           <Link href="/fragments/new">新增</Link>
         </nav>

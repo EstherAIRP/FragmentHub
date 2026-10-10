@@ -21,11 +21,8 @@ export const fragmentTypeSchema = z.enum([
 ]);
 
 export const fragmentStatusSchema = z.enum([
+  "incubating",
   "inbox",
-  "seed",
-  "exploring",
-  "defined",
-  "actionable",
   "active",
   "waiting",
   "done",
