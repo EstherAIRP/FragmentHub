@@ -168,7 +168,6 @@ h3 {
   color: #202838;
 }
 
-.dashboardHero,
 .detailHeader,
 .pageHeader {
   display: flex;
@@ -178,13 +177,8 @@ h3 {
   margin-bottom: 28px;
 }
 
-.dashboardHero > div:first-child,
 .detailHeader > div:first-child {
   max-width: 800px;
-}
-
-.dashboardHero h1 {
-  max-width: 760px;
 }
 
 .heroCopy {
@@ -195,7 +189,6 @@ h3 {
   line-height: 1.75;
 }
 
-.heroActions,
 .detailActions,
 .editorActions {
   display: flex;
@@ -290,35 +283,6 @@ h3 {
 .panel {
   border-radius: 24px;
   padding: 26px;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.stats article {
-  min-width: 0;
-  border: 1px solid #e1e5ec;
-  border-radius: 17px;
-  padding: 18px;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.stats span {
-  display: block;
-  min-height: 34px;
-  color: #7a8494;
-  font-size: 12px;
-}
-
-.stats strong {
-  display: block;
-  margin-top: 7px;
-  font-size: 30px;
-  letter-spacing: -0.04em;
 }
 
 .panelHeader,
@@ -1187,10 +1151,6 @@ h3 {
 }
 
 @media (max-width: 980px) {
-  .stats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
   .filterPrimary {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -1244,7 +1204,6 @@ h3 {
     font-size: 12px;
   }
 
-  .dashboardHero,
   .detailHeader,
   .pageHeader {
     align-items: flex-start;
@@ -1252,18 +1211,12 @@ h3 {
     gap: 18px;
   }
 
-  .heroActions,
   .detailActions {
     width: 100%;
   }
 
-  .heroActions .linkButton,
   .detailActions .linkButton {
     flex: 1;
-  }
-
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .filterPrimary,
@@ -1388,5 +1341,338 @@ h3 {
   .accountAvatar,
   .accountAvatarFallback {
     display: none;
+  }
+}
+
+/* Kanban home. Text/background pairs are at least 4.5:1. */
+.boardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 24px;
+  margin-bottom: 22px;
+}
+
+.boardHeader h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.boardControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.boardTabs {
+  display: inline-flex;
+  gap: 2px;
+  border-radius: 11px;
+  padding: 3px;
+  background: #e9edf3;
+}
+
+.boardTabs a {
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #566071;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.boardTabs a:hover {
+  color: #182230;
+}
+
+.boardTabs a[aria-current="page"] {
+  background: #fff;
+  color: #182230;
+  box-shadow: 0 1px 3px rgba(24, 34, 48, 0.12);
+}
+
+.boardTabs a:focus-visible,
+.moveTrigger:focus-visible,
+.moveOptions button:focus-visible {
+  outline: 3px solid rgba(93, 97, 163, 0.45);
+  outline-offset: 1px;
+}
+
+.boardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.boardColumn {
+  min-width: 0;
+  border-radius: 18px;
+  padding: 14px;
+  background: #f0f2f6;
+}
+
+.boardColumnHeader {
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.boardColumnHeader h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #182230;
+  font-size: 15px;
+}
+
+.boardCount {
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: #e4e8ef;
+  color: #475467;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.boardHint {
+  margin: 6px 0 0;
+  color: #8a5300;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.boardEmpty {
+  margin: 0;
+  padding: 18px 4px;
+  color: #5f6877;
+  font-size: 13px;
+}
+
+.boardCards,
+.incubatingList {
+  display: grid;
+  gap: 10px;
+}
+
+.incubatingList {
+  max-width: 720px;
+}
+
+.boardCard {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #e1e5ec;
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: #fff;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.boardCard:hover {
+  border-color: #c9cfdb;
+  box-shadow: 0 10px 28px rgba(24, 34, 48, 0.08);
+}
+
+.boardCard:has(.cardLink:focus-visible) {
+  outline: 3px solid rgba(93, 97, 163, 0.45);
+  outline-offset: 2px;
+}
+
+.boardCard h3 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.boardCard h3 a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.boardNextAction {
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: #475467;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.boardCardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.boardMeta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.boardMeta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.boardPriority.levelHigh {
+  background: #fdecec;
+  color: #a12f2f;
+}
+
+.boardPriority.levelMedium {
+  background: #fdf1dc;
+  color: #8a5300;
+}
+
+.boardDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.boardDomain {
+  background: #ececfb;
+  color: #4f4f91;
+}
+
+.boardScope {
+  background: #f1f3f6;
+  color: #5d6676;
+}
+
+/* Sits above the stretched card link so it stays clickable. */
+.moveMenu {
+  position: relative;
+  z-index: 2;
+  flex: none;
+}
+
+/* Cards don't form stacking contexts, so every .moveMenu shares one layer;
+   lift the open one above later cards' triggers. */
+.moveMenu:has(.moveOptions) {
+  z-index: 10;
+}
+
+.moveTrigger {
+  border: 1px solid #d8dde7;
+  border-radius: 9px;
+  padding: 4px 9px;
+  background: #fff;
+  color: #475467;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.moveTrigger:hover:not(:disabled) {
+  background: #f4f6f9;
+  color: #182230;
+}
+
+.moveTrigger:disabled {
+  opacity: 0.55;
+}
+
+.moveOptions {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 3;
+  min-width: 120px;
+  margin: 0;
+  border: 1px solid #e1e5ec;
+  border-radius: 12px;
+  padding: 5px;
+  background: #fff;
+  box-shadow: 0 14px 36px rgba(24, 34, 48, 0.14);
+  list-style: none;
+}
+
+.moveOptions button {
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: transparent;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.moveOptions button:hover,
+.moveOptions button:focus-visible {
+  background: #eef1f6;
+  color: #182230;
+}
+
+.moveOptionArchive {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #edf0f4;
+}
+
+.moveDialog {
+  width: min(420px, calc(100% - 32px));
+  border: 1px solid #e1e5ec;
+  border-radius: 18px;
+  padding: 22px;
+  color: #182230;
+  box-shadow: 0 24px 60px rgba(24, 34, 48, 0.2);
+}
+
+.moveDialog::backdrop {
+  background: rgba(24, 34, 48, 0.35);
+}
+
+.moveDialogTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.moveDialogError {
+  margin: 12px 0 0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  background: #fff7f7;
+  color: #9c3535;
+  font-size: 13px;
+}
+
+.moveDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.boardFooter {
+  margin: 18px 4px 0;
+}
+
+@media (max-width: 760px) {
+  .boardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .boardHeader {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

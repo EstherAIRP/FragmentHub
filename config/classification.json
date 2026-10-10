@@ -63,54 +63,42 @@
   "status": {
     "mode": "single",
     "values": {
+      "incubating": {
+        "label": "醞釀中",
+        "description": "想法仍在成形、資訊仍少，暫不排入執行"
+      },
       "inbox": {
-        "label": "Inbox",
-        "description": "已決定保留，但刻意暫不進一步整理"
-      },
-      "seed": {
-        "label": "Seed",
-        "description": "初步形成、資訊仍少"
-      },
-      "exploring": {
-        "label": "Exploring",
-        "description": "正在研究、討論或補充資訊"
-      },
-      "defined": {
-        "label": "Defined",
-        "description": "範圍與內容已相對明確"
-      },
-      "actionable": {
-        "label": "Actionable",
-        "description": "已有清楚下一步，可開始執行"
+        "label": "待處理",
+        "description": "已決定要處理，等待開始"
       },
       "active": {
-        "label": "Active",
+        "label": "進行中",
         "description": "正在執行、學習或推進"
       },
       "waiting": {
-        "label": "Waiting",
-        "description": "等待外部回覆、條件、時間或依賴"
+        "label": "卡住",
+        "description": "等待外部回覆、條件、時間或依賴而無法推進"
       },
       "done": {
-        "label": "Done",
+        "label": "完成",
         "description": "主要目的已完成"
       },
       "archived": {
-        "label": "Archived",
+        "label": "已封存",
         "description": "不再主動處理，但保留紀錄"
       }
     },
     "recommended_by_type": {
-      "idea": ["seed", "exploring", "defined", "actionable", "active", "done", "archived"],
-      "task": ["actionable", "active", "waiting", "done", "archived"],
-      "learning": ["seed", "exploring", "defined", "active", "done", "archived"],
-      "requirement": ["exploring", "defined", "actionable", "done", "archived"],
-      "project": ["defined", "active", "waiting", "done", "archived"],
-      "question": ["exploring", "defined", "done", "archived"],
-      "decision": ["defined", "done", "archived"],
+      "idea": ["incubating", "inbox", "active", "done", "archived"],
+      "task": ["inbox", "active", "waiting", "done", "archived"],
+      "learning": ["incubating", "inbox", "active", "done", "archived"],
+      "requirement": ["incubating", "inbox", "active", "waiting", "done", "archived"],
+      "project": ["incubating", "inbox", "active", "waiting", "done", "archived"],
+      "question": ["incubating", "inbox", "done", "archived"],
+      "decision": ["incubating", "inbox", "done", "archived"],
       "tracking": ["active", "waiting", "done", "archived"],
-      "resource": ["defined", "archived"],
-      "note": ["defined", "archived"]
+      "resource": ["inbox", "archived"],
+      "note": ["inbox", "archived"]
     },
     "note": "Recommended statuses guide AI suggestions but do not make other schema-valid statuses illegal."
   },

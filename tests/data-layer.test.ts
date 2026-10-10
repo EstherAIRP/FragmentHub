@@ -14,7 +14,7 @@ function fragment(overrides: Partial<Fragment> = {}): Fragment {
     updated_at: "2026-10-02T16:00:00+08:00",
     scope: "personal",
     type: "idea",
-    status: "seed",
+    status: "incubating",
     priority: "medium",
     urgency: "low",
     domains: ["knowledge-management"],

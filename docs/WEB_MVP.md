@@ -9,7 +9,7 @@
 FragmentHub Web 負責：
 
 - GitHub OAuth 登入門
-- Dashboard
+- 看板首頁
 - Fragment List
 - Search
 - Filter
@@ -17,6 +17,7 @@ FragmentHub Web 負責：
 - 手動新增草稿
 - 手動編輯草稿
 - Archive 狀態操作
+- 看板卡片「移到」狀態移動（確認後才寫入）
 - Project / Related / Backlink 顯示
 - JSON 草稿預覽
 
@@ -60,15 +61,18 @@ Session 使用 HttpOnly Cookie。
 
 ### /
 
-Dashboard 顯示：
+看板首頁：
 
-- Total
-- Actionable
-- Active
-- Waiting
-- Work
-- Personal
-- 最近更新 Fragment
+- 檢視切換：`看板`（預設）／`醞釀中`（`?view=incubating`）
+- 範圍切換：`全部`／`工作`／`個人`（`?scope=work|personal`），兩個參數互相保留
+- 看板三欄：待處理（`inbox`）、進行中（`active`）、卡住（`waiting`），欄標題顯示數量
+- 每欄依分數（priority + urgency，high 3／medium 2／low 1／none 0）由高到低，再依 `updated_at` 由新到舊排序
+- 進行中超過 3 件時顯示提示，不阻擋操作
+- 看板下方顯示「近 7 天完成 N 件」，連到 `/fragments?status=done`（保留 scope）；以 `updated_at` 作為完成時間的近似值
+- 醞釀中檢視列出 `incubating` Fragment，依 `updated_at` 由新到舊
+- `archived` 不出現在看板或醞釀中，仍可在 Fragment 庫篩選
+
+每張卡片有「移到 ▸」選單（醞釀中／待處理／進行中／卡住／完成，另有分隔的封存）。選擇後先跳出確認對話框，按「確認」才透過既有的 `PUT /api/fragments/[id]` 寫入，只改 `status`，其他欄位原樣保留，並帶 `expected_updated_at` 做樂觀並行控制；409 時提示重新整理。若某筆資料經草稿驗證後會被改動（例如標題前後空白、未註冊的 domain），選單會停用，需改走編輯頁。
 
 ### /fragments
 

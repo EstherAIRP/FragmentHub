@@ -1,93 +1,208 @@
 import Link from "next/link";
 
-import { FragmentCard } from "@/components/fragment-card";
+import { BoardCard } from "@/components/board-card";
 import { listFragments } from "@/lib/fragments";
+import {
+  activeSoftLimit,
+  boardColumns,
+  countRecentlyDone,
+  filterByScope,
+  groupBoard,
+  listIncubating,
+  parseBoardScope,
+  type BoardScope,
+} from "@/lib/fragments/board";
 import { statusLabels } from "@/lib/fragments/presentation";
+import { isGitHubRemoteConfigured } from "@/lib/github/availability";
 
-export default async function DashboardPage() {
-  const fragments = await listFragments();
+type BoardView = "board" | "incubating";
 
-  const stats = {
-    total: fragments.length,
-    active: fragments.filter((item) => item.status === "active").length,
-    waiting: fragments.filter((item) => item.status === "waiting").length,
-    actionable: fragments.filter((item) => item.status === "actionable").length,
-    work: fragments.filter((item) => item.scope === "work").length,
-    personal: fragments.filter((item) => item.scope === "personal").length,
-  };
+type BoardPageProps = {
+  searchParams: Promise<{
+    view?: string;
+    scope?: string;
+  }>;
+};
+
+const scopeTabs: { value: BoardScope; label: string }[] = [
+  { value: "all", label: "全部" },
+  { value: "work", label: "工作" },
+  { value: "personal", label: "個人" },
+];
+
+const viewTabs: { value: BoardView; label: string }[] = [
+  { value: "board", label: "看板" },
+  { value: "incubating", label: "醞釀中" },
+];
+
+function homeHref(view: BoardView, scope: BoardScope) {
+  const params = new URLSearchParams();
+  if (view !== "board") params.set("view", view);
+  if (scope !== "all") params.set("scope", scope);
+
+  const query = params.toString();
+  return query ? `/?${query}` : "/";
+}
+
+function doneHref(scope: BoardScope) {
+  const params = new URLSearchParams({ status: "done" });
+  if (scope !== "all") params.set("scope", scope);
+  return `/fragments?${params.toString()}`;
+}
+
+export default async function BoardPage({ searchParams }: BoardPageProps) {
+  const [allFragments, query] = await Promise.all([
+    listFragments(),
+    searchParams,
+  ]);
+
+  const view: BoardView = query.view === "incubating" ? "incubating" : "board";
+  const scope = parseBoardScope(query.scope);
+  const fragments = filterByScope(allFragments, scope);
+  const remoteConfigured = isGitHubRemoteConfigured();
+  const showScope = scope === "all";
 
   return (
     <main className="pageShell">
-      <section className="dashboardHero">
-        <div>
-          <h1>你的碎片，集中在同一個資料池。</h1>
-          <p className="heroCopy">
-            Web 不執行 AI 分析；這裡只負責瀏覽、搜尋、篩選與手動管理 GitHub Fragment。
-          </p>
-        </div>
+      <section className="boardHeader">
+        <h1>看板</h1>
 
-        <div className="heroActions">
-          <Link className="primaryButton linkButton" href="/fragments/new">
-            手動新增 Fragment
-          </Link>
-          <Link className="secondaryButton linkButton" href="/fragments">
-            瀏覽全部
-          </Link>
-        </div>
-      </section>
-
-      <section className="stats" aria-label="Fragment 統計">
-        <article>
-          <span>全部</span>
-          <strong>{stats.total}</strong>
-        </article>
-        <article>
-          <span>{statusLabels.actionable}</span>
-          <strong>{stats.actionable}</strong>
-        </article>
-        <article>
-          <span>{statusLabels.active}</span>
-          <strong>{stats.active}</strong>
-        </article>
-        <article>
-          <span>{statusLabels.waiting}</span>
-          <strong>{stats.waiting}</strong>
-        </article>
-        <article>
-          <span>工作</span>
-          <strong>{stats.work}</strong>
-        </article>
-        <article>
-          <span>個人</span>
-          <strong>{stats.personal}</strong>
-        </article>
-      </section>
-
-      <section className="panel">
-        <div className="panelHeader">
-          <div>
-            <h2>最近更新</h2>
-          </div>
-          <Link className="textLink" href="/fragments">
-            查看全部
-          </Link>
-        </div>
-
-        {fragments.length === 0 ? (
-          <div className="emptyState">
-            <strong>目前還沒有正式 Fragment。</strong>
-            <p>
-              你可以在 ChatGPT 完成整理後寫入 GitHub，或先使用 Web 的手動新增表單準備草稿。
-            </p>
-          </div>
-        ) : (
-          <div className="fragmentList">
-            {fragments.slice(0, 6).map((fragment) => (
-              <FragmentCard fragment={fragment} key={fragment.id} />
+        <div className="boardControls">
+          <nav className="boardTabs" aria-label="檢視">
+            {viewTabs.map((tab) => (
+              <Link
+                key={tab.value}
+                href={homeHref(tab.value, scope)}
+                aria-current={view === tab.value ? "page" : undefined}
+              >
+                {tab.label}
+              </Link>
             ))}
-          </div>
-        )}
+          </nav>
+
+          <nav className="boardTabs" aria-label="範圍">
+            {scopeTabs.map((tab) => (
+              <Link
+                key={tab.value}
+                href={homeHref(view, tab.value)}
+                aria-current={scope === tab.value ? "page" : undefined}
+              >
+                {tab.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </section>
+
+      {view === "board" ? (
+        <BoardColumns
+          fragments={fragments}
+          scope={scope}
+          showScope={showScope}
+          remoteConfigured={remoteConfigured}
+        />
+      ) : (
+        <IncubatingList
+          fragments={fragments}
+          showScope={showScope}
+          remoteConfigured={remoteConfigured}
+        />
+      )}
     </main>
+  );
+}
+
+type SectionProps = {
+  fragments: Parameters<typeof groupBoard>[0];
+  showScope: boolean;
+  remoteConfigured: boolean;
+};
+
+function BoardColumns({
+  fragments,
+  scope,
+  showScope,
+  remoteConfigured,
+}: SectionProps & { scope: BoardScope }) {
+  const columns = groupBoard(fragments);
+  const recentlyDone = countRecentlyDone(fragments, new Date());
+
+  return (
+    <>
+      <div className="boardGrid">
+        {boardColumns.map((status) => {
+          const cards = columns[status];
+          const headingId = `board-column-${status}`;
+
+          return (
+            <section
+              className="boardColumn"
+              key={status}
+              aria-labelledby={headingId}
+            >
+              <header className="boardColumnHeader">
+                <h2 id={headingId}>
+                  {statusLabels[status]}
+                  <span className="boardCount">{cards.length}</span>
+                </h2>
+                {status === "active" && cards.length > activeSoftLimit ? (
+                  <p className="boardHint">
+                    超過 {activeSoftLimit} 件，考慮先收尾
+                  </p>
+                ) : null}
+              </header>
+
+              {cards.length === 0 ? (
+                <p className="boardEmpty">目前沒有項目</p>
+              ) : (
+                <div className="boardCards">
+                  {cards.map((fragment) => (
+                    <BoardCard
+                      key={fragment.id}
+                      fragment={fragment}
+                      showScope={showScope}
+                      remoteConfigured={remoteConfigured}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </div>
+
+      <p className="boardFooter">
+        <Link className="textLink" href={doneHref(scope)}>
+          近 7 天完成 {recentlyDone} 件 →
+        </Link>
+      </p>
+    </>
+  );
+}
+
+function IncubatingList({
+  fragments,
+  showScope,
+  remoteConfigured,
+}: SectionProps) {
+  const items = listIncubating(fragments);
+
+  return (
+    <section className="incubatingList" aria-label={statusLabels.incubating}>
+      {items.length === 0 ? (
+        <p className="boardEmpty">
+          目前沒有醞釀中的想法。還沒準備好開始的想法可以先放在這裡。
+        </p>
+      ) : (
+        items.map((fragment) => (
+          <BoardCard
+            key={fragment.id}
+            fragment={fragment}
+            showScope={showScope}
+            remoteConfigured={remoteConfigured}
+          />
+        ))
+      )}
+    </section>
   );
 }

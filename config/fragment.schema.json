@@ -63,11 +63,8 @@
     },
     "status": {
       "enum": [
+        "incubating",
         "inbox",
-        "seed",
-        "exploring",
-        "defined",
-        "actionable",
         "active",
         "waiting",
         "done",

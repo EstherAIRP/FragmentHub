@@ -20,14 +20,11 @@ export const typeLabels = {
 } as const;
 
 export const statusLabels = {
-  inbox: "收件匣",
-  seed: "種子",
-  exploring: "探索中",
-  defined: "已定義",
-  actionable: "可執行",
+  incubating: "醞釀中",
+  inbox: "待處理",
   active: "進行中",
-  waiting: "等待中",
-  done: "已完成",
+  waiting: "卡住",
+  done: "完成",
   archived: "已封存",
 } as const;
 
@@ -72,11 +69,8 @@ export function fieldLabel(path: string) {
  * Status chip tone, expressed as the CSS class applied to `.statusChip`.
  */
 export const statusTones = {
+  incubating: "toneViolet",
   inbox: "toneBlue",
-  seed: "toneViolet",
-  exploring: "toneViolet",
-  defined: "toneViolet",
-  actionable: "toneGreen",
   active: "toneGreen",
   waiting: "toneAmber",
   done: "toneMuted",

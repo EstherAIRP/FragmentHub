@@ -238,11 +238,8 @@ personal
 初版共用狀態：
 
 ```text
+incubating
 inbox
-seed
-exploring
-defined
-actionable
 active
 waiting
 done
@@ -318,7 +315,7 @@ Tags 主要由 GPT 建議，使用者可修改、刪除或新增。
 
   "scope": "work",
   "type": "requirement",
-  "status": "exploring",
+  "status": "incubating",
   "priority": "high",
   "urgency": "medium",
 
@@ -601,7 +598,7 @@ generated/index.json
     "title": "研究 Jev",
     "scope": "personal",
     "type": "learning",
-    "status": "exploring",
+    "status": "incubating",
     "priority": "medium",
     "urgency": "low",
     "domains": ["AI-RPG"],
@@ -741,17 +738,13 @@ Web 不呼叫 OpenAI API，也不執行 GPT 分析。
 
 ## 15. 網站功能規劃
 
-### 15.1 Dashboard
+### 15.1 看板首頁
 
 顯示：
 
-- Total
-- Actionable
-- Active
-- Waiting
-- Work
-- Personal
-- 最近更新 Fragment
+- 待處理 / 進行中 / 卡住 三欄看板（可切換 全部 / 工作 / 個人）
+- 醞釀中清單
+- 近 7 天完成件數
 
 ### 15.2 Fragment List
 
