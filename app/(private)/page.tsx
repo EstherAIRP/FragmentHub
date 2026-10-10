@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BoardCard } from "@/components/board-card";
+import { requireSession } from "@/lib/auth";
 import { listFragments } from "@/lib/fragments";
 import {
   activeSoftLimit,
@@ -51,6 +52,8 @@ function doneHref(scope: BoardScope) {
 }
 
 export default async function BoardPage({ searchParams }: BoardPageProps) {
+  await requireSession();
+
   const [allFragments, query] = await Promise.all([
     listFragments(),
     searchParams,

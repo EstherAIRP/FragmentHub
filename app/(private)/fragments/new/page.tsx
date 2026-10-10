@@ -1,5 +1,6 @@
 import domainsConfig from "@/config/domains.json";
 import { FragmentForm } from "@/components/fragment-form";
+import { requireSession } from "@/lib/auth";
 import { listFragments } from "@/lib/fragments";
 import { collectTags } from "@/lib/fragments/query";
 import { isGitHubRemoteConfigured } from "@/lib/github/availability";
@@ -31,6 +32,8 @@ const initial: ManualFragmentDraft = {
 };
 
 export default async function NewFragmentPage() {
+  await requireSession();
+
   const fragments = await listFragments();
 
   const domains = Object.entries(domainsConfig.domains).map(([id, value]) => ({

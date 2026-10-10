@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import domainsConfig from "@/config/domains.json";
 import { FragmentForm } from "@/components/fragment-form";
+import { requireSession } from "@/lib/auth";
 import { listFragments } from "@/lib/fragments";
 import { collectTags } from "@/lib/fragments/query";
 import { isGitHubRemoteConfigured } from "@/lib/github/availability";
@@ -20,6 +21,8 @@ export default async function EditFragmentPage({
   params,
   searchParams,
 }: EditFragmentPageProps) {
+  await requireSession();
+
   const [{ id }, query, fragments] = await Promise.all([
     params,
     searchParams,

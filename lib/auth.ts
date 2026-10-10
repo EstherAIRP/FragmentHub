@@ -2,11 +2,13 @@ import "server-only";
 
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 import {
   constantTimeEqual,
   createPkceChallenge,
   parseAllowedGitHubIds,
+  sessionCookieNameFor,
   signPayload,
   verifyPayload,
   type ExpiringPayload,
@@ -16,9 +18,7 @@ const SESSION_SECONDS = 60 * 60 * 24 * 7;
 const FLOW_SECONDS = 60 * 10;
 
 function sessionCookieName() {
-  return process.env.NODE_ENV === "production"
-    ? "__Host-fragmenthub_session"
-    : "fragmenthub_session";
+  return sessionCookieNameFor(process.env.NODE_ENV);
 }
 
 function flowCookieName() {
@@ -422,10 +422,14 @@ export function expiredSessionCookie() {
 }
 
 export async function getCurrentSession(): Promise<AuthSession | null> {
+  // Read cookies before any early return: this opts every caller into
+  // request-time rendering, so a private route can never be prerendered
+  // (with Fragment data baked in) when auth env vars are missing at build.
+  const store = await cookies();
+
   if (!isAuthConfigured()) return null;
 
   const config = getGitHubOAuthConfig();
-  const store = await cookies();
   const token = store.get(sessionCookieName())?.value;
   const session = verifyPayload<AuthSession>(token, config.sessionSecret);
 
@@ -437,6 +441,22 @@ export async function getCurrentSession(): Promise<AuthSession | null> {
     !config.allowedGitHubIds.has(session.id)
   ) {
     return null;
+  }
+
+  return session;
+}
+
+/**
+ * Authorization gate for private pages. Must be the first statement of every
+ * app/(private)/**\/page.tsx, before any Fragment data access: Next.js renders
+ * page segments in parallel with their layout, so a redirect in the layout
+ * alone does not stop the page from rendering and serializing its data.
+ */
+export async function requireSession(): Promise<AuthSession> {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    redirect("/login");
   }
 
   return session;

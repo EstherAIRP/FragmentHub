@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { StatusChip } from "@/components/status-chip";
+import { requireSession } from "@/lib/auth";
 import type { Fragment } from "@/lib/fragment-schema";
 import { listFragments } from "@/lib/fragments";
 import {
@@ -23,6 +24,8 @@ type FragmentDetailPageProps = {
 export default async function FragmentDetailPage({
   params,
 }: FragmentDetailPageProps) {
+  await requireSession();
+
   const { id } = await params;
   const fragments = await listFragments();
   const fragment = fragments.find((item) => item.id === id);

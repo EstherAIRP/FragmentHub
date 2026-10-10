@@ -8,6 +8,16 @@ export type ExpiringPayload = {
   exp: number;
 };
 
+/**
+ * Name of the signed session cookie. Kept here (dependency-free) so the
+ * proxy and lib/auth.ts can never disagree about it.
+ */
+export function sessionCookieNameFor(nodeEnv: string | undefined): string {
+  return nodeEnv === "production"
+    ? "__Host-fragmenthub_session"
+    : "fragmenthub_session";
+}
+
 function safeEqual(left: string, right: string): boolean {
   const a = Buffer.from(left);
   const b = Buffer.from(right);

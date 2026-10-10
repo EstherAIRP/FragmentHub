@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import { FragmentCard } from "@/components/fragment-card";
 import { FragmentFilters } from "@/components/fragment-filters";
+import { requireSession } from "@/lib/auth";
 import { listFragments } from "@/lib/fragments";
 import {
   collectTags,
@@ -17,6 +18,8 @@ type FragmentsPageProps = {
 export default async function FragmentsPage({
   searchParams,
 }: FragmentsPageProps) {
+  await requireSession();
+
   const [allFragments, filters] = await Promise.all([
     listFragments(),
     searchParams,
