@@ -1,4 +1,6 @@
 import type { Fragment } from "@/lib/fragment-schema";
+import type { BoardCardData } from "@/lib/fragments/board-edit";
+import { domainLabel } from "@/lib/fragments/presentation";
 
 export const boardColumns = ["inbox", "active", "waiting"] as const;
 
@@ -40,7 +42,9 @@ export function compareBoardCards(a: Fragment, b: Fragment) {
   return a.id.localeCompare(b.id);
 }
 
-function compareUpdatedAtDesc(a: Fragment, b: Fragment) {
+type UpdatedAtSortable = Pick<Fragment, "id" | "updated_at">;
+
+function compareUpdatedAtDesc(a: UpdatedAtSortable, b: UpdatedAtSortable) {
   return Date.parse(b.updated_at) - Date.parse(a.updated_at);
 }
 
@@ -79,10 +83,40 @@ export function groupBoard(
   return columns;
 }
 
-export function listIncubating(fragments: readonly Fragment[]): Fragment[] {
+export function listIncubating<T extends UpdatedAtSortable & Pick<Fragment, "status">>(
+  fragments: readonly T[],
+): T[] {
   return fragments
     .filter((fragment) => fragment.status === "incubating")
     .sort((a, b) => compareUpdatedAtDesc(a, b) || a.id.localeCompare(b.id));
+}
+
+/** Statuses whose cards the home page sends to the client. */
+export const boardVisibleStatuses = [
+  "incubating",
+  ...boardColumns,
+] as const satisfies readonly Fragment["status"][];
+
+/**
+ * Board cards for the client, in board order (score, then recency). Only the
+ * fields a card displays are included, plus id, status and updated_at.
+ */
+export function toBoardCards(fragments: readonly Fragment[]): BoardCardData[] {
+  return fragments
+    .filter((fragment) =>
+      (boardVisibleStatuses as readonly string[]).includes(fragment.status),
+    )
+    .sort(compareBoardCards)
+    .map((fragment) => ({
+      id: fragment.id,
+      title: fragment.title,
+      scope: fragment.scope,
+      status: fragment.status,
+      priority: fragment.priority,
+      next_action: fragment.next_action,
+      updated_at: fragment.updated_at,
+      domainLabels: fragment.domains.slice(0, 2).map(domainLabel),
+    }));
 }
 
 const dayMs = 24 * 60 * 60 * 1000;

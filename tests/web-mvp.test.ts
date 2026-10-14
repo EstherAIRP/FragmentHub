@@ -13,14 +13,27 @@ import {
   groupBoard,
   listIncubating,
   parseBoardScope,
+  toBoardCards,
 } from "../lib/fragments/board";
+import {
+  buildStatusBatchRequest,
+  groupEditZones,
+  interpretStatusBatchResponse,
+  listPendingChanges,
+  moveCard,
+  parseBoardDraft,
+  rebasePendingChanges,
+  revertChange,
+  serializeBoardDraft,
+  statusBatchErrorMessages,
+  type PendingChanges,
+} from "../lib/fragments/board-edit";
 import {
   manualFragmentDraftSchema,
   toFragmentWriteInput,
 } from "../lib/fragments/manual-draft";
 import { domainLabel } from "../lib/fragments/presentation";
 import { filterFragments } from "../lib/fragments/query";
-import { buildStatusMoveDraft } from "../lib/fragments/status-move";
 import { normalizeTag, normalizeTags } from "../lib/fragments/tags";
 import { prepareCreateInput, prepareReplacement } from "../lib/fragments/write";
 
@@ -347,39 +360,208 @@ test("recently done counts done Fragments updated within 7 days", () => {
   assert.equal(countRecentlyDone(items, now), 2);
 });
 
-test("status move draft round-trips every stored field except status", () => {
-  const current = fragment({
-    status: "inbox",
-    scope: "work",
-    type: "task",
-    priority: "high",
-    urgency: "medium",
-    domains: ["automation-rpa", "ai"],
-    tags: ["ocr", "rpa"],
-    title: "OCR check",
-    summary: "Check OCR flow.",
-    next_action: "Run test.",
-    notes: "Some notes.",
-    original_input: "  Keep  original\nwhitespace  ",
-    interview: [{ question: "Q?", answer: "A" }],
-    source: { channel: "chatgpt" },
-    ai: { classification_confirmed: true, interview_used: true },
-  });
+test("board cards carry only displayed fields plus id, status and updated_at", () => {
+  const cards = toBoardCards([
+    fragment({
+      id: "F-000001",
+      status: "inbox",
+      priority: "high",
+      domains: ["ai", "computer-vision", "automation-rpa"],
+      original_input: "secret original",
+      notes: "private notes",
+      interview: [{ question: "Q?", answer: "A" }],
+      ai: { classification_confirmed: true, interview_used: true },
+    }),
+    fragment({ id: "F-000002", status: "done" }),
+    fragment({ id: "F-000003", status: "archived" }),
+    fragment({ id: "F-000004", status: "incubating" }),
+  ]);
 
-  const move = buildStatusMoveDraft(current);
-  assert.equal(move.ok, true);
-  if (!move.ok) return;
-
-  const draft = manualFragmentDraftSchema.parse({ ...move.draft, status: "done" });
-  const replacement = prepareReplacement(current, draft);
-
-  assert.deepEqual(replacement, { ...current, status: "done" });
+  assert.deepEqual(cards.map((card) => card.id), ["F-000001", "F-000004"]);
+  assert.deepEqual(Object.keys(cards[0]).sort(), [
+    "domainLabels",
+    "id",
+    "next_action",
+    "priority",
+    "scope",
+    "status",
+    "title",
+    "updated_at",
+  ]);
+  assert.deepEqual(cards[0].domainLabels, [domainLabel("ai"), "電腦視覺"]);
 });
 
-test("status move refuses Fragments the draft schema would alter or reject", () => {
-  const padded = fragment({ title: " Padded title " });
-  const unknownDomain = fragment({ domains: ["not-a-domain"] });
+const editCard = (id: string, status: Fragment["status"], updated_at = "2026-10-02T16:00:00+08:00") => ({
+  id,
+  title: `Title ${id}`,
+  status,
+  updated_at,
+});
 
-  assert.equal(buildStatusMoveDraft(padded).ok, false);
-  assert.equal(buildStatusMoveDraft(unknownDomain).ok, false);
+test("board edit records moves and drops a card moved back to its original status", () => {
+  const a = editCard("F-000001", "inbox");
+  const b = editCard("F-000002", "incubating");
+
+  let changes: PendingChanges = {};
+  changes = moveCard(changes, a, "active");
+  changes = moveCard(changes, a, "waiting");
+  changes = moveCard(changes, b, "archived");
+
+  assert.deepEqual(listPendingChanges(changes), [
+    { id: "F-000001", title: "Title F-000001", from: "inbox", to: "waiting", expected_updated_at: a.updated_at },
+    { id: "F-000002", title: "Title F-000002", from: "incubating", to: "archived", expected_updated_at: b.updated_at },
+  ]);
+
+  changes = moveCard(changes, a, "inbox");
+  assert.deepEqual(Object.keys(changes), ["F-000002"]);
+
+  changes = revertChange(changes, "F-000002");
+  assert.deepEqual(changes, {});
+});
+
+test("board edit groups cards by effective status and hides archived", () => {
+  const cards = [
+    editCard("F-000001", "inbox"),
+    editCard("F-000002", "incubating"),
+    editCard("F-000003", "active"),
+  ];
+  let changes: PendingChanges = moveCard({}, cards[0], "done");
+  changes = moveCard(changes, cards[1], "inbox");
+  changes = moveCard(changes, cards[2], "archived");
+
+  const zones = groupEditZones(cards, changes);
+  assert.deepEqual(zones.done.map((card) => card.id), ["F-000001"]);
+  assert.deepEqual(zones.inbox.map((card) => card.id), ["F-000002"]);
+  assert.deepEqual(zones.incubating, []);
+  assert.deepEqual(zones.active, []);
+  assert.deepEqual(zones.waiting, []);
+});
+
+test("board edit payload uses each card's stored updated_at verbatim", () => {
+  const a = editCard("F-000002", "inbox", "2026-10-05T09:30:00+08:00");
+  const b = editCard("F-000001", "waiting", "2026-10-04T01:02:03.456Z");
+  let changes = moveCard({}, a, "active");
+  changes = moveCard(changes, b, "done");
+
+  assert.deepEqual(buildStatusBatchRequest(changes), {
+    changes: [
+      { id: "F-000001", status: "done", expected_updated_at: "2026-10-04T01:02:03.456Z" },
+      { id: "F-000002", status: "active", expected_updated_at: "2026-10-05T09:30:00+08:00" },
+    ],
+  });
+});
+
+test("board edit rebase keeps untouched changes and drops conflicts and stale cards", () => {
+  const a = editCard("F-000001", "inbox");
+  const b = editCard("F-000002", "inbox");
+  const c = editCard("F-000003", "active");
+  const d = editCard("F-000004", "waiting");
+  const e = editCard("F-000005", "incubating");
+
+  let changes: PendingChanges = {};
+  for (const card of [a, b, c, d, e]) changes = moveCard(changes, card, "done");
+
+  const refreshed = [
+    a, // unchanged: keep
+    { ...b, updated_at: "2026-10-09T00:00:00+08:00", status: "waiting" as const }, // updated elsewhere
+    c, // reported as 409 conflict
+    { ...d, status: "done" as const }, // already reflects the change
+    // e disappeared
+  ];
+
+  const result = rebasePendingChanges(changes, refreshed, ["F-000003"]);
+
+  assert.deepEqual(Object.keys(result.changes), ["F-000001"]);
+  assert.deepEqual(result.dropped.map((change) => change.id), ["F-000002", "F-000005"]);
+});
+
+test("status batch responses map to UI outcomes", () => {
+  assert.deepEqual(interpretStatusBatchResponse(200, { fragments: [], commit: "x" }), { kind: "ok" });
+  assert.deepEqual(interpretStatusBatchResponse(401, null), { kind: "unauthorized" });
+  assert.deepEqual(
+    interpretStatusBatchResponse(409, { error: "conflict", conflicts: ["F-000001", 3] }),
+    { kind: "conflict", ids: ["F-000001"] },
+  );
+  assert.deepEqual(interpretStatusBatchResponse(409, { error: "conflict", conflicts: [] }), {
+    kind: "conflict",
+    ids: [],
+  });
+  assert.deepEqual(interpretStatusBatchResponse(404, { error: "missing", missing: ["F-000009"] }), {
+    kind: "missing",
+    ids: ["F-000009"],
+  });
+  assert.deepEqual(
+    interpretStatusBatchResponse(422, { error: "invalid", invalid: [{ id: "F-000001", message: "bad" }, { nope: 1 }] }),
+    { kind: "invalid", items: [{ id: "F-000001", message: "bad" }] },
+  );
+  assert.deepEqual(interpretStatusBatchResponse(400, { error: "沒有需要更新的狀態。" }), {
+    kind: "error",
+    message: statusBatchErrorMessages.badRequest,
+  });
+  // English server errors never reach the UI; status codes pick zh-TW text.
+  assert.deepEqual(interpretStatusBatchResponse(502, { error: "GitHub write failed." }), {
+    kind: "error",
+    message: "寫入 GitHub 失敗，請稍後再試。",
+  });
+  assert.deepEqual(interpretStatusBatchResponse(500, { error: "Fragment status batch failed." }), {
+    kind: "error",
+    message: "寫入 GitHub 失敗，請稍後再試。",
+  });
+  assert.deepEqual(
+    interpretStatusBatchResponse(503, { error: "GitHub Remote Store is not configured." }),
+    { kind: "error", message: "GitHub Remote Store 尚未設定，無法儲存。" },
+  );
+  assert.deepEqual(interpretStatusBatchResponse(418, "oops"), {
+    kind: "error",
+    message: statusBatchErrorMessages.fallback,
+  });
+});
+
+test("board draft round-trips pending changes per scope", () => {
+  const a = editCard("F-000001", "inbox", "2026-10-05T09:30:00+08:00");
+  const b = editCard("F-000002", "waiting");
+  let changes: PendingChanges = {};
+  changes = moveCard(changes, a, "active");
+  changes = moveCard(changes, b, "archived");
+
+  const draft = parseBoardDraft(serializeBoardDraft("work", changes));
+  assert.equal(draft?.scope, "work");
+  assert.deepEqual(draft?.changes, changes);
+});
+
+test("board draft parsing ignores malformed data", () => {
+  assert.equal(parseBoardDraft(null), null);
+  assert.equal(parseBoardDraft("not json"), null);
+  assert.equal(parseBoardDraft(JSON.stringify({ changes: [] })), null);
+  assert.equal(parseBoardDraft(JSON.stringify({ scope: "all", changes: {} })), null);
+
+  const draft = parseBoardDraft(
+    JSON.stringify({
+      scope: "all",
+      changes: [
+        { id: "F-000001", title: "ok", from: "inbox", to: "active", expected_updated_at: "2026-10-05T00:00:00Z" },
+        { id: "F-000002", title: "bad status", from: "inbox", to: "actionable", expected_updated_at: "2026-10-05T00:00:00Z" },
+        { id: "F-000003", title: "no-op", from: "inbox", to: "inbox", expected_updated_at: "2026-10-05T00:00:00Z" },
+        { id: "F-000004", title: "missing timestamp", from: "inbox", to: "done" },
+        null,
+      ],
+    }),
+  );
+  assert.deepEqual(Object.keys(draft?.changes ?? {}), ["F-000001"]);
+});
+
+test("restored board draft is rebased: cards updated elsewhere are dropped", () => {
+  const a = editCard("F-000001", "inbox", "2026-10-05T00:00:00Z");
+  const b = editCard("F-000002", "inbox", "2026-10-05T00:00:00Z");
+  let changes: PendingChanges = {};
+  changes = moveCard(changes, a, "active");
+  changes = moveCard(changes, b, "done");
+
+  const draft = parseBoardDraft(serializeBoardDraft("all", changes));
+  const rebased = rebasePendingChanges(draft?.changes ?? {}, [
+    a,
+    { ...b, updated_at: "2026-10-06T00:00:00Z" },
+  ]);
+  assert.deepEqual(Object.keys(rebased.changes), ["F-000001"]);
+  assert.deepEqual(rebased.dropped.map((change) => change.id), ["F-000002"]);
 });
