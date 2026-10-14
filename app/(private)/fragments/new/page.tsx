@@ -53,7 +53,7 @@ export default async function NewFragmentPage() {
         <div>
           <h1>手動新增 Fragment</h1>
           <p className="subtle">
-            不呼叫 AI。確認 JSON 後會透過 GitHub Remote Store 正式建立 Fragment。
+            填寫內容後按「建立 Fragment」，確認內容後才會儲存。
           </p>
         </div>
       </section>

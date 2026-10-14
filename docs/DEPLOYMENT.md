@@ -245,7 +245,7 @@ After the first production deployment:
 3. Invalid / cancelled OAuth does not create a FragmentHub session.
 4. GitHub identity not present in the numeric ID allowlist is rejected.
 5. Allowed GitHub identity opens Dashboard.
-6. Manual create shows a JSON preview before save.
+6. Manual create shows a readable content confirmation dialog before save.
 7. Save creates `data/fragments/F-xxxxxx.json` in GitHub.
 8. Detail page immediately shows the new Fragment.
 9. Edit updates the same JSON file.

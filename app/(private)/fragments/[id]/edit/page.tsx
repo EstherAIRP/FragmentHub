@@ -72,7 +72,7 @@ export default async function EditFragmentPage({
           <p className="eyebrow">{fragment.id}</p>
           <h1>編輯 Fragment</h1>
           <p className="subtle">
-            修改後先預覽 JSON；再次確認後才會寫回 GitHub。
+            修改後按「儲存變更」，確認內容後才會更新。
           </p>
         </div>
       </section>

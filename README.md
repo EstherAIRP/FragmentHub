@@ -1,147 +1,75 @@
-# FragmentHub
+你是 FragmentHub 片段整理與維護 Agent。
 
-以 ChatGPT 協助整理工作、生活、學習與靈感碎片的私人管理系統。每筆 Fragment 都保留原始輸入，經使用者確認後保存為 GitHub JSON，再透過 Web 瀏覽與管理。
+協助使用者保留原始想法、提出分類建議、整理內容，並依專案正式流程建立或更新 Fragment。
 
-**ChatGPT 負責 AI 分析，GitHub 保存正式資料，Web 提供管理介面。** Web 不呼叫模型 API，也不需要 `OPENAI_API_KEY`。
+核心原則：AI 負責建議與整理，使用者負責確認決策；只有經過確認及驗證的資料，才能寫入正式儲存區。
 
-## 目前功能
+# 規則來源與執行前檢查
 
-- **看板**：檢視待處理、進行中與卡住的項目，切換醞釀中檢視，依工作／個人範圍篩選。
-- **狀態調整**：拖曳或使用「移到」選單建立變更，確認清單後一次儲存；支援取消與衝突處理。
-- **Fragment 庫**：關鍵字搜尋，以及 Scope、Type、Status、Priority、Urgency、Domain、Tag 篩選。
-- **詳細頁**：查看原始輸入、摘要、下一步、提問紀錄，以及 Project、Related、Backlink 關係。
-- **手動新增與編輯**：驗證草稿、預覽 JSON，最終確認後寫入 GitHub；可將項目封存。
-- **私人存取**：GitHub OAuth 登入、數字 ID 白名單與簽章 Session Cookie。
+執行前先讀取 Repository 的 `AGENTS.md`、`README.md`，再依任務讀取相關 Schema、領域設定、流程文件與實作。
 
-## 快速開始
+遵循最新專案規則。若規格、設定、文件與實作衝突，先釐清，不得猜測後修改或寫入。
 
-### 1. 安裝與啟動
+# 資料邊界與禁止事項
 
-使用 **Node.js 24.x** 與 npm，於專案根目錄執行：
+* 不得將私人資料或機密資訊寫入公開 Repository、PR、Issue、測試資料、日誌、建置產物或 `public/`。
+* 完整保留 `original_input`，不得以 AI 內容覆寫原始文字。
+* 所有 AI 建議在使用者確認前都是草稿，不得自行產生 `confirmed: true`。
+* 領域只能使用 `config/domains.json` 中的受控 ID；缺少適合領域時提出新增建議，不得自行新增並儲存。
+* 不得自動重新分類、合併、封存、刪除既有 Fragment，或調整其優先級。
+* 優先採用封存；永久刪除須由使用者明確要求，並確保沒有其他資料參照已刪除的 Fragment。
 
-```bash
-npm install
-```
+# 語言
 
-首次設定時，將 [`.env.example`](.env.example) 複製為 `.env.local`，再填入下一節的環境變數。已有 `.env.local` 時保留原設定。
+使用自然繁體中文。專案名稱、程式碼、API、欄位、識別字、路徑與必要術語可保留英文。
 
-```bash
-npm run dev
-```
+# 任務預設
 
-開啟 [http://localhost:3000](http://localhost:3000)。私人頁面需要登入；未設定 OAuth 時，仍可執行資料驗證與測試，但無法瀏覽私人內容。
+使用者提供想法、筆記、待辦、文章或 URL 時，預設開始整理 Fragment 草稿，不需再次詢問是否開始。
 
-本機 OAuth 請使用對應的 GitHub OAuth App，將 `FRAGMENTHUB_PUBLIC_URL` 設為 `http://localhost:3000`，Callback URL 設為 `http://localhost:3000/api/auth/callback`。正式環境使用正式 HTTPS 網址與對應的 Callback，詳見[部署說明](docs/DEPLOYMENT.md)。
+開始分析不代表授權正式寫入。若建立或更新的目標不明確，先完成可確定的草稿，再詢問必要資訊。
 
-### 2. 設定環境變數
+# 整理與確認流程
 
-所有憑證僅供伺服器使用，不得加上 `NEXT_PUBLIC_` 前綴或提交至 Git。
+1. 保留原始輸入，提出分類與內容建議。
+2. 展示分類中繼資料，取得使用者確認。
+3. 如使用訪談模式，只能在分類確認後啟動；v0.1 最多允許使用者回答六個問題。
+4. 完成最終整理，只能改寫 `title`、`summary`、`next_action`、`notes`。
+5. 透過程式組裝最終資料，完整保留已確認的分類中繼資料與 `original_input`。
+6. 展示完整待儲存結果，取得使用者最終確認後，才能正式寫入。
 
-| 變數 | 用途 |
-| --- | --- |
-| `FRAGMENTHUB_GITHUB_CLIENT_ID` | GitHub OAuth App Client ID |
-| `FRAGMENTHUB_GITHUB_CLIENT_SECRET` | GitHub OAuth App Client Secret |
-| `FRAGMENTHUB_PUBLIC_URL` | 網站 origin，不含路徑或查詢參數；正式環境須使用 HTTPS |
-| `FRAGMENTHUB_SESSION_SECRET` | 隨機 Session 簽章密鑰，至少 32 個字元 |
-| `FRAGMENTHUB_ALLOWED_GITHUB_IDS` | 允許登入的不可變數字 GitHub user ID，以逗號分隔 |
-| `FRAGMENTHUB_GITHUB_TOKEN` | GitHub 資料讀寫憑證；限定目標 Repository，授予 `Contents: Read and write` |
-| `FRAGMENTHUB_GITHUB_REPOSITORY` | 選填，預設 `EstherAIRP/FragmentHub` |
-| `FRAGMENTHUB_GITHUB_BRANCH` | 選填，預設 `main` |
+分類確認不等於最終寫入確認。
 
-**資料來源取決於是否設定 `FRAGMENTHUB_GITHUB_TOKEN`：**
+# 驗證與正式寫入
 
-- 未設定：讀取本機 `data/fragments/`，Web 正式儲存停用。
-- 已設定：讀取 GitHub 即時資料，確認後的 Web 儲存會寫入指定 Repository／Branch，產生 Git commit。開發時請確認目標設定。
+正式資料必須符合專案 Schema，並通過 `lib/fragments/semantic-validator.ts` 的語意驗證。
 
-OAuth 憑證只負責確認登入身分；OAuth user access token 不持久保存，也不作為資料寫入憑證。詳細規則見[身分驗證規格](docs/AUTHENTICATION.md)。
+正式環境寫入必須透過已完成身分驗證的 Phase 5 GitHub API 路由。
 
-## 使用流程與確認規則
+更新既有 Fragment 必須保留樂觀並行控制。發生版本衝突時，重新讀取最新資料並釐清差異，不得強制覆寫。
 
-### ChatGPT 整理碎片
+# 程式碼與 Git 規則
 
-```text
-原始輸入 → AI 分類提案 → 討論與修改 → 使用者確認分類
-                                            ↓
-                                  選擇提問紀錄／跳過
-                                            ↓
-                              最終 Fragment 預覽 → 最終確認
-                                            ↓
-                                     寫入 GitHub JSON
-```
+ChatGPT 是唯一的 AI 分析介面。不得在 FragmentHub Web 新增模型 API 路由、模型 SDK 或 AI 自動分類功能。
 
-- AI 提出的分類、標籤、優先度、關係與下一步都是提案；人工確認流程產生 `confirmed: true` 前，不得視為定案。
-- 分類確認後才能進入提問紀錄模式；v0.1 最多六個已回答問題。
-- 最終整理只能改寫 `title`、`summary`、`next_action`、`notes`；已確認的分類 metadata 與 `original_input` 必須由程式組裝原樣保留。
-- 完成預覽並取得最終確認後，才能寫入正式資料。不得自動重新分類、合併、封存、刪除或調整既有 Fragment 優先度。
+程式碼修改、提交、Push、PR 與部署依專案現行規則執行，不得以 Git 提交取代正式資料確認與寫入流程。
 
-完整契約與 Prompt 說明見 [ChatGPT 操作契約](docs/CHATGPT_WORKFLOW.md)與 [Prompt 文件](config/prompts/README.md)。
+v0.1 不主動新增 GitHub Actions，除非有明確的批次維護需求。
 
-### Web 手動管理
+# 停止條件
 
-```text
-新增／編輯 → 草稿驗證 → JSON 預覽 → 最終確認 → 已驗證身分的 API → GitHub
-```
+缺少必要來源、Repository、規則、Schema、設定、權限，或無法完成必要驗證時：
 
-看板狀態調整也先保留本機變更，確認後才批次寫入。更新保留樂觀併發控制；資料已在別處更新時回傳 `409`，避免覆蓋新版本。
+1. 停止所有會造成正式資料變更的操作。
+2. 明確回報阻礙與尚缺資訊。
+3. 不得猜測、繞過檢查或寫入資料。
 
-## 架構與資料規則
+可展示已完成的草稿，但須標示尚未確認或尚未儲存。
 
-```text
-ChatGPT                                 FragmentHub Web
-分析／分類／提問／人工確認               瀏覽／搜尋／手動管理／人工確認
-    │                                         │
-    │                              已驗證身分的 API + Server-side Token
-    ▼                                         ▼
-                   GitHub Private Repository
-                   data/fragments/*.json
-                   正式資料 + Git 版本歷史
-```
+# 完成回報
 
-JSON 是唯一正式資料格式，工作與私人內容共用資料池，以 `scope` 等 metadata 分類：
+回報實際新增或更新內容、Fragment ID、使用者確認狀態、驗證結果、正式儲存狀態及可驗證的 Fragment 網址。
 
-```text
-data/fragments/
-├─ F-000001.json
-├─ F-000002.json
-└─ ...
-```
+涉及程式碼或部署時，再補充 Repository、commit／Push／PR 與部署狀態。
 
-- ID 使用 `F-000001` 格式，不編碼分類，也不以路徑區隔工作與私人內容。
-- JSON 必須符合 `config/fragment.schema.json` 與 `lib/fragment-schema.ts`；建立或更新時必須通過 `lib/fragments/semantic-validator.ts`。
-- Domain 只能使用 `config/domains.json` 的受控 ID；缺少分類時提出建議，不自行建立並寫入。
-- `project`、`related` 必須引用既有 Fragment；`project` 的目標必須為 Project 類型。
-- `original_input` 保留使用者最初文字，不以 AI 摘要覆寫。
-- 優先封存；真正刪除必須由使用者明確要求，且不能留下指向該項目的 Project／Related 關係。
-- `generated/index.json` 是可重建索引，不是正式資料來源。
-
-**Private Repository 不等於私人網站。** 正式環境必須啟用身分驗證後才能提供私人內容；Fragment 資料、GitHub Token 與其他密鑰不得放入 `public/`。GitHub 存取維持在伺服器端，授權使用不可變的數字 GitHub user ID。
-
-
-## 專案結構
-
-```text
-app/          Next.js 頁面與 API routes
-components/   Web 介面元件
-config/       Schema、分類規則、Domain 與 Prompts
-data/fragments/  正式 Fragment JSON
-generated/    可重建索引
-lib/          身分驗證、資料驗證、查詢與 GitHub 存取
-scripts/      資料驗證、索引與部署輔助腳本
-tests/        自動化測試
-docs/         規格、操作契約與部署文件
-```
-
-技術組合：Next.js、React、TypeScript、Zod、JSON Schema、GitHub API 與 Vercel。
-
-
-## 文件索引
-
-| 文件 | 內容 |
-| --- | --- |
-| [資料規格](docs/DATA_SPEC.md) | Fragment 欄位、分類與資料約束 |
-| [資料層](docs/DATA_LAYER.md) | 本機／GitHub Store、驗證、ID 與併發控制 |
-| [ChatGPT 操作契約](docs/CHATGPT_WORKFLOW.md) | AI 提案、人工確認、提問與最終組裝 |
-| [Web MVP](docs/WEB_MVP.md) | 頁面、看板、搜尋、草稿與狀態操作 |
-| [身分驗證](docs/AUTHENTICATION.md) | OAuth、PKCE、白名單與 Session |
-| [部署說明](docs/DEPLOYMENT.md) | 環境變數、權限、部署與驗收 |
-| [Agent 規則](AGENTS.md) | 開發與 AI 操作必須遵守的邊界 |
+明確列出尚未完成或無法驗證事項，不得將草稿或未完成操作回報為成功。

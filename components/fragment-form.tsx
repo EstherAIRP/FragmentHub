@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { TagInput } from "@/components/tag-input";
 import {
   manualFragmentDraftSchema,
-  toFragmentWriteInput,
   type ManualFragmentDraft,
 } from "@/lib/fragments/manual-draft";
 import {
@@ -77,20 +76,28 @@ export function FragmentForm({
   existingMeta,
 }: FragmentFormProps) {
   const router = useRouter();
-  const [previewDraft, setPreviewDraft] =
+  const confirmationRef = useRef<HTMLDialogElement>(null);
+  const [reviewDraft, setReviewDraft] =
     useState<ManualFragmentDraft | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(initial.status);
 
-  // Any edit invalidates the confirmed preview; the user must re-check first.
-  function invalidatePreview() {
-    setPreviewDraft(null);
+  useEffect(() => {
+    const dialog = confirmationRef.current;
+    if (!dialog) return;
+    if (reviewDraft && !dialog.open) dialog.showModal();
+    if (!reviewDraft && dialog.open) dialog.close();
+  }, [reviewDraft]);
+
+  // Any edit invalidates the review draft; the user must re-check first.
+  function invalidateReview() {
+    setReviewDraft(null);
     setSaveError(null);
   }
 
-  function buildPreview(event: React.FormEvent<HTMLFormElement>) {
+  function reviewBeforeSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const form = new FormData(event.currentTarget);
@@ -120,7 +127,7 @@ export function FragmentForm({
     const parsed = manualFragmentDraftSchema.safeParse(candidate);
 
     if (!parsed.success) {
-      setPreviewDraft(null);
+      setReviewDraft(null);
       setSaveError(null);
       setErrors(parsed.error.issues.map(issueMessage));
       return;
@@ -128,11 +135,11 @@ export function FragmentForm({
 
     setErrors([]);
     setSaveError(null);
-    setPreviewDraft(parsed.data);
+    setReviewDraft(parsed.data);
   }
 
   async function saveDraft() {
-    if (!previewDraft || !remoteConfigured || saving) return;
+    if (!reviewDraft || !remoteConfigured || saving) return;
 
     setSaving(true);
     setSaveError(null);
@@ -151,11 +158,11 @@ export function FragmentForm({
         body: JSON.stringify(
           mode === "edit" && existingMeta
             ? {
-                draft: previewDraft,
+                draft: reviewDraft,
                 expected_updated_at: existingMeta.updated_at,
               }
             : {
-                draft: previewDraft,
+                draft: reviewDraft,
               },
         ),
       });
@@ -177,32 +184,43 @@ export function FragmentForm({
     }
   }
 
-  const preview = previewDraft
-    ? JSON.stringify(
-        mode === "edit" && existingMeta
-          ? {
-              id: existingMeta.id,
-              created_at: existingMeta.created_at,
-              updated_at: "(儲存時更新)",
-              ...toFragmentWriteInput(previewDraft),
-            }
-          : {
-              id: "(儲存時配發)",
-              created_at: "(儲存時產生)",
-              updated_at: "(儲存時產生)",
-              ...toFragmentWriteInput(previewDraft),
-            },
-        null,
-        2,
-      )
-    : null;
+  function fragmentName(id: string) {
+    const fragment = fragments.find((item) => item.id === id);
+    return fragment ? `${fragment.title}（${id}）` : id;
+  }
+
+  const reviewFields: [string, string][] = reviewDraft
+    ? [
+        [fieldLabels.scope, scopeLabels[reviewDraft.scope]],
+        [fieldLabels.type, typeLabels[reviewDraft.type]],
+        [fieldLabels.status, statusLabels[reviewDraft.status]],
+        [fieldLabels.priority, levelLabels[reviewDraft.priority]],
+        [fieldLabels.urgency, levelLabels[reviewDraft.urgency]],
+        [
+          fieldLabels.domains,
+          reviewDraft.domains
+            .map((id) => domains.find((item) => item.id === id)?.label ?? id)
+            .join("、") || "無",
+        ],
+        [fieldLabels.tags, reviewDraft.tags.join("、") || "無"],
+        [fieldLabels.summary, reviewDraft.summary || "—"],
+        [fieldLabels.next_action, reviewDraft.next_action || "—"],
+        [fieldLabels.original_input, reviewDraft.original_input],
+        [fieldLabels.notes, reviewDraft.notes || "—"],
+        [
+          fieldLabels.project,
+          reviewDraft.project ? fragmentName(reviewDraft.project) : "無",
+        ],
+        [fieldLabels.related, reviewDraft.related.map(fragmentName).join("、") || "無"],
+      ]
+    : [];
 
   return (
     <div className="editorLayout">
       <form
         className="fragmentEditor"
-        onSubmit={buildPreview}
-        onChange={invalidatePreview}
+        onSubmit={reviewBeforeSave}
+        onChange={invalidateReview}
       >
         <div className="editorSection">
           <div className="sectionHeading">
@@ -244,7 +262,7 @@ export function FragmentForm({
                   setStatus(
                     event.target.value as ManualFragmentDraft["status"],
                   );
-                  invalidatePreview();
+                  invalidateReview();
                 }}
               >
                 {Object.entries(statusLabels).map(([value, label]) => (
@@ -366,7 +384,7 @@ export function FragmentForm({
             label={fieldLabels.tags}
             defaultValue={initial.tags}
             suggestions={tagSuggestions}
-            onChange={invalidatePreview}
+            onChange={invalidateReview}
           />
         </div>
 
@@ -415,7 +433,7 @@ export function FragmentForm({
         </div>
 
         {errors.length > 0 ? (
-          <div className="notice danger">
+          <div className="notice danger" role="alert">
             <strong>草稿尚未通過檢查</strong>
             <ul>
               {errors.map((error) => (
@@ -432,65 +450,102 @@ export function FragmentForm({
               type="button"
               onClick={() => {
                 setStatus("archived");
-                invalidatePreview();
+                invalidateReview();
               }}
             >
               設為已封存
             </button>
           ) : null}
 
-          <button className="primaryButton" type="submit">
-            檢查並預覽 JSON
+          <button className="primaryButton" type="submit" disabled={saving}>
+            {mode === "edit" ? "儲存變更" : "建立 Fragment"}
           </button>
         </div>
+        {!remoteConfigured ? (
+          <p className="muted">目前尚未開放儲存，你仍可填寫並檢查內容。</p>
+        ) : null}
       </form>
 
-      <aside className="draftPreview">
-        <div className="sectionHeading">
-          <div>
-            <h2>待儲存 JSON</h2>
-          </div>
-        </div>
-
-        {preview ? (
+      <dialog
+        ref={confirmationRef}
+        className="fragmentConfirmDialog"
+        aria-labelledby="fragment-confirm-title"
+        aria-describedby="fragment-confirm-description"
+        aria-busy={saving}
+        onCancel={(event) => {
+          if (saving) event.preventDefault();
+        }}
+        onClose={() => {
+          if (!saving) invalidateReview();
+        }}
+      >
+        {reviewDraft ? (
           <>
-            <pre>{preview}</pre>
+            <header className="fragmentConfirmHeader">
+              <h2 id="fragment-confirm-title">
+                {mode === "edit" ? "確認變更" : "確認建立 Fragment"}
+              </h2>
+              <p id="fragment-confirm-description" className="subtle">
+                請確認以下內容，按下「確認儲存」後才會正式儲存。
+              </p>
+            </header>
 
-            {!remoteConfigured ? (
-              <div className="notice danger">
-                <strong>GitHub Remote Store 尚未設定</strong>
-                <p>
-                  需要在 Vercel 設定 FRAGMENTHUB_GITHUB_TOKEN 後才能正式儲存。
-                </p>
-              </div>
-            ) : null}
+            <div className="fragmentConfirmContent">
+              <h3>{reviewDraft.title}</h3>
+              <dl className="fragmentConfirmMetadata">
+                {reviewFields.slice(0, 5).map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <dl className="fragmentConfirmFields">
+                {reviewFields.slice(5).map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd className="preserveText">{value}</dd>
+                  </div>
+                ))}
+              </dl>
 
-            {saveError ? (
-              <div className="notice danger">
-                <strong>儲存失敗</strong>
-                <p>{saveError}</p>
-              </div>
-            ) : null}
+              {!remoteConfigured ? (
+                <div className="notice danger">
+                  <strong>目前無法儲存</strong>
+                  <p>資料儲存服務尚未設定，請先返回編輯。</p>
+                </div>
+              ) : null}
 
-            <button
-              className="primaryButton saveButton"
-              type="button"
-              disabled={!remoteConfigured || saving}
-              onClick={saveDraft}
-            >
-              {saving
-                ? "正在寫入 GitHub…"
-                : mode === "edit"
-                  ? "確認並更新 GitHub"
-                  : "確認並建立 Fragment"}
-            </button>
+              {saveError ? (
+                <div className="notice danger" role="alert">
+                  <strong>儲存失敗</strong>
+                  <p>{saveError}</p>
+                </div>
+              ) : null}
+            </div>
+
+            <footer className="fragmentConfirmActions">
+              <button
+                className="secondaryButton"
+                type="button"
+                disabled={saving}
+                autoFocus
+                onClick={invalidateReview}
+              >
+                返回編輯
+              </button>
+              <button
+                className="primaryButton"
+                type="button"
+                disabled={!remoteConfigured || saving}
+                onClick={saveDraft}
+              >
+                {saving ? "儲存中…" : "確認儲存"}
+              </button>
+            </footer>
           </>
-        ) : (
-          <div className="previewEmpty">
-            填寫表單後按「檢查並預覽 JSON」，確認內容後才會出現 GitHub 儲存按鈕。
-          </div>
-        )}
-      </aside>
+        ) : null}
+      </dialog>
     </div>
   );
 }
