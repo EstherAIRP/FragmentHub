@@ -33,7 +33,7 @@ import {
   toFragmentWriteInput,
 } from "../lib/fragments/manual-draft";
 import { domainLabel } from "../lib/fragments/presentation";
-import { filterFragments } from "../lib/fragments/query";
+import { collectTags, filterFragments } from "../lib/fragments/query";
 import { normalizeTag, normalizeTags } from "../lib/fragments/tags";
 import { prepareCreateInput, prepareReplacement } from "../lib/fragments/write";
 
@@ -261,16 +261,44 @@ test("domainLabel resolves configured labels and falls back to the ID", () => {
   assert.equal(domainLabel("not-a-domain"), "not-a-domain");
 });
 
-test("normalizeTag produces lowercase kebab-case tags", () => {
+test("normalizeTag retains Unicode tags alongside old English tags", () => {
   assert.equal(normalizeTag("  OCR  "), "ocr");
   assert.equal(normalizeTag("Fragment Management"), "fragment-management");
   assert.equal(normalizeTag("snake_case__tag"), "snake-case-tag");
   assert.equal(normalizeTag("a - b"), "a-b");
   assert.equal(normalizeTag("   "), "");
+  assert.equal(normalizeTag(" RPA介紹 "), "rpa介紹");
+  assert.equal(normalizeTag("文件 撰寫"), "文件-撰寫");
+  assert.equal(normalizeTag("文件_交付"), "文件-交付");
+  assert.equal(normalizeTag("cafe\u0301"), "café");
+  assert.deepEqual(normalizeTags(["RPA介紹", "rpa介紹", "文件交付"]), [
+    "rpa介紹",
+    "文件交付",
+  ]);
   assert.deepEqual(normalizeTags(["OCR", "ocr", " ", "Work Flow"]), [
     "ocr",
     "work-flow",
   ]);
+});
+
+test("manual draft accepts Chinese tags without changing domain IDs", () => {
+  const draft = manualFragmentDraftSchema.parse(fragment({
+    tags: ["文件撰寫", "rpa介紹"],
+  }));
+  assert.deepEqual(draft.tags, ["文件撰寫", "rpa介紹"]);
+  assert.deepEqual(draft.domains, ["knowledge-management"]);
+});
+
+test("Chinese tags participate in collection and normalized search", () => {
+  const items = [
+    fragment({ id: "F-000001", tags: ["文件交付", "café"] }),
+    fragment({ id: "F-000002", tags: ["文件撰寫", "ocr"] }),
+  ];
+
+  assert.deepEqual(collectTags(items), ["café", "ocr", "文件交付", "文件撰寫"].sort());
+  assert.deepEqual(filterFragments(items, { tag: "交付" }).map((item) => item.id), ["F-000001"]);
+  assert.deepEqual(filterFragments(items, { q: "文件撰寫" }).map((item) => item.id), ["F-000002"]);
+  assert.deepEqual(filterFragments(items, { tag: "cafe\u0301" }).map((item) => item.id), ["F-000001"]);
 });
 
 test("status enum rejects removed lifecycle values", () => {

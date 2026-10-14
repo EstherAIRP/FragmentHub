@@ -279,12 +279,14 @@ config/domains.json
 格式：
 
 ```json
-"tags": ["ocr", "screen-automation", "prompt-generation"]
+"tags": ["文件交付", "rpa介紹", "ocr"]
 ```
 
 規則：
 
-- 使用小寫 kebab-case。
+- 支援中文、英文與其他 Unicode 字母或數字，也可中英文混用；只允許字母／數字與內部連字號 `-`。
+- 既有小寫英文 kebab-case 標籤仍有效，Domain ID 規則不變。
+- 輸入時會做 Unicode NFC 正規化、去除前後空白、轉小寫，並將內部空白／底線轉為連字號；不合法符號由 Schema 拒絕。
 - 建議 2–6 個，最多 12 個。
 - 不重複 domains 已表達的高階概念，除非該詞本身也是重要搜尋詞。
 - 避免完整句子。

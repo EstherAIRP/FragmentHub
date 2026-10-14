@@ -131,7 +131,8 @@
   },
   "tags": {
     "mode": "free-multiple",
-    "format": "lowercase-kebab-case",
+    "format": "unicode-letters-and-numbers-with-internal-hyphens",
+    "normalization": "NFC; trim; lowercase; convert whitespace and underscores to hyphens",
     "recommended_count": "2-6",
     "absolute_max": 12,
     "strategy": "AI proposes reusable fine-grained tags; user confirms them."

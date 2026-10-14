@@ -13,7 +13,7 @@ export type FragmentFilters = {
 };
 
 function normalized(value?: string) {
-  return value?.trim().toLowerCase() ?? "";
+  return value?.normalize("NFC").trim().toLowerCase() ?? "";
 }
 
 export function filterFragments(
@@ -34,7 +34,7 @@ export function filterFragments(
 
       if (
         tag &&
-        !fragment.tags.some((item) => item.toLowerCase().includes(tag))
+        !fragment.tags.some((item) => normalized(item).includes(tag))
       ) {
         return false;
       }
@@ -52,6 +52,7 @@ export function filterFragments(
           fragment.tags.join(" "),
         ]
           .join(" ")
+          .normalize("NFC")
           .toLowerCase();
 
         if (!haystack.includes(q)) return false;

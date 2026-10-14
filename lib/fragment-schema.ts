@@ -5,6 +5,11 @@ export const slugSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
+// Tags support Unicode letters and digits; domain IDs remain ASCII-only.
+export const tagSchema = z
+  .string()
+  .regex(/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u);
+
 export const scopeSchema = z.enum(["work", "personal"]);
 
 export const fragmentTypeSchema = z.enum([
@@ -48,7 +53,7 @@ export const fragmentSchema = z
     priority: levelSchema,
     urgency: levelSchema,
     domains: z.array(slugSchema).max(5),
-    tags: z.array(slugSchema).max(12),
+    tags: z.array(tagSchema).max(12),
     project: fragmentIdSchema.nullable(),
     related: z.array(fragmentIdSchema),
     title: z.string().min(1).max(120),

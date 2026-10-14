@@ -336,7 +336,7 @@ export function FragmentFilters({ tags }: { tags: string[] }) {
                 onChange={(event) => changeText("tag", event.target.value)}
                 onBlur={applyText}
                 list="fragment-tags"
-                placeholder="例如 ocr"
+                placeholder="例如 文件交付、ocr"
                 autoComplete="off"
               />
               <datalist id="fragment-tags">

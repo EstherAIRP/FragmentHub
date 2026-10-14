@@ -1,12 +1,14 @@
 /**
- * Normalizes a user-entered tag to the lowercase kebab-case form stored in
- * Fragment JSON. Returns an empty string when nothing usable remains.
+ * Normalizes Unicode tag text to NFC, lowercases letters and converts spaces
+ * or underscores to hyphens. Invalid symbols remain for schema validation,
+ * rather than being silently removed.
  */
 export function normalizeTag(value: string) {
   return value
+    .normalize("NFC")
     .trim()
     .toLowerCase()
-    .replace(/[_\s]+/g, "-")
+    .replace(/[_\s]+/gu, "-")
     .replace(/-+/g, "-");
 }
 

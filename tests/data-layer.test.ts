@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { fragmentSchema, type Fragment } from "../lib/fragment-schema";
+import { validateFragmentJsonSchema } from "../lib/fragments/json-schema-validator";
 import { nextFragmentId } from "../lib/fragments/id";
 import { buildFragmentIndex } from "../lib/fragments/index";
 import { validateFragmentSemantics } from "../lib/fragments/semantic-validator";
@@ -35,6 +36,25 @@ function fragment(overrides: Partial<Fragment> = {}): Fragment {
     ...overrides,
   });
 }
+
+test("Chinese and mixed-script tags pass both canonical schemas", () => {
+  const candidate = fragment({ tags: ["文件撰寫", "rpa介紹", "ocr", "文件-交付"] });
+  assert.equal(fragmentSchema.safeParse(candidate).success, true);
+  assert.deepEqual(validateFragmentJsonSchema(candidate), []);
+  assert.deepEqual(validateFragmentSemantics(candidate, [candidate]), []);
+});
+
+test("tag validators reject invalid symbols while domains remain ASCII-only", () => {
+  const candidate = fragment();
+  for (const invalid of ["文字@標籤", "-文件", "文件-", "兩--字", "文件 空格"]) {
+    const bad = { ...candidate, tags: [invalid] };
+    assert.equal(fragmentSchema.safeParse(bad).success, false, invalid);
+    assert.notEqual(validateFragmentJsonSchema(bad).length, 0, invalid);
+  }
+  const invalidDomain = { ...candidate, domains: ["自動化"] };
+  assert.equal(fragmentSchema.safeParse(invalidDomain).success, false);
+  assert.notEqual(validateFragmentJsonSchema(invalidDomain).length, 0);
+});
 
 test("nextFragmentId uses the largest existing ID", () => {
   assert.equal(

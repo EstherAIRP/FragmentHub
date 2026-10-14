@@ -196,7 +196,7 @@ export function TagInput({
             }
             aria-describedby={hintId}
             value={text}
-            placeholder={tags.length === 0 ? "例如 ocr、workflow" : ""}
+            placeholder={tags.length === 0 ? "例如 文件撰寫、ocr" : ""}
             onChange={handleChange}
             onCompositionEnd={(event) =>
               splitPending(event.currentTarget.value)
@@ -244,7 +244,7 @@ export function TagInput({
       </div>
 
       <small id={hintId}>
-        按 Enter、逗號或 Tab 加入；Backspace 移除最後一個。會轉成小寫 kebab-case 格式。
+        按 Enter、逗號或 Tab 加入；Backspace 移除最後一個。支援中文；英文轉小寫、空白轉連字號。
       </small>
     </div>
   );

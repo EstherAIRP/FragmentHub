@@ -9,6 +9,7 @@ import {
   levelSchema,
   scopeSchema,
   slugSchema,
+  tagSchema,
   type Fragment,
 } from "@/lib/fragment-schema";
 
@@ -26,7 +27,7 @@ export const manualFragmentDraftSchema = z.object({
   priority: levelSchema,
   urgency: levelSchema,
   domains: z.array(domainSchema).max(5),
-  tags: z.array(slugSchema).max(12),
+  tags: z.array(tagSchema).max(12),
   project: fragmentIdSchema.nullable(),
   related: z.array(fragmentIdSchema),
   title: z.string().trim().min(1).max(120),
