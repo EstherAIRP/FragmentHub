@@ -9,6 +9,12 @@ import {
 } from "@/lib/fragments/semantic-validator";
 import { serializeFragment } from "@/lib/fragments/local-store";
 import {
+  applyStatusBatch,
+  type StatusBatchChange,
+  type StatusBatchOutcome,
+} from "@/lib/fragments/status-batch";
+import { createGitHubStatusBatchApi } from "@/lib/github/status-batch-git";
+import {
   decodeBase64Utf8,
   encodeBase64Utf8,
   getGitHubConfigFromEnv,
@@ -336,6 +342,23 @@ export async function deleteGitHubFragment(
 
     throw error;
   }
+}
+
+/**
+ * Writes a batch of status-only changes as ONE commit on the configured
+ * branch (all-or-nothing). Uses the same server-side FRAGMENTHUB_GITHUB_TOKEN
+ * config as the single-fragment write path; see lib/fragments/status-batch.ts.
+ */
+export async function applyGitHubStatusBatch(
+  changes: readonly StatusBatchChange[],
+  config = getGitHubConfigFromEnv(),
+): Promise<StatusBatchOutcome> {
+  const api = createGitHubStatusBatchApi(
+    { owner: config.owner, repo: config.repo, branch: config.branch },
+    (pathname, init) => githubRequest(config, pathname, init),
+  );
+
+  return applyStatusBatch(changes, api);
 }
 
 export class GitHubFragmentConflictError extends Error {
