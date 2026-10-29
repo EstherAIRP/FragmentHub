@@ -2,10 +2,10 @@
   "schema_version": "0.1",
   "id": "F-000002",
   "created_at": "2026-10-14T12:50:58.634Z",
-  "updated_at": "2026-10-14T12:50:58.634Z",
+  "updated_at": "2026-10-29T13:58:51.829Z",
   "scope": "personal",
   "type": "learning",
-  "status": "inbox",
+  "status": "active",
   "priority": "medium",
   "urgency": "none",
   "domains": [
